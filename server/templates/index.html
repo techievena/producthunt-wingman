@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PH Wingman</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #fff;
+      color: #111;
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── Header ─────────────────────────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      height: 56px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: -0.3px;
+    }
+    .logo-mark {
+      width: 28px;
+      height: 28px;
+      background: #111;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .scheduler-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .badge-active   { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+    .badge-inactive { background: #f8f8f8; color: #888; border: 1px solid #e8e8e8; }
+    .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+    }
+    .dot-green { background: #22c55e; animation: blink 2s infinite; }
+    .dot-gray  { background: #ccc; }
+    @keyframes blink {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .settings-link {
+      font-size: 13px;
+      color: #888;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .settings-link:hover { color: #111; }
+
+    /* ── Page wrapper ────────────────────────────────────────────────────── */
+    .page {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 40px 80px;
+    }
+
+    /* ── Stats row ───────────────────────────────────────────────────────── */
+    .stats-row {
+      display: flex;
+      gap: 0;
+      border: 1px solid #f0f0f0;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 48px;
+    }
+    .stat {
+      flex: 1;
+      padding: 20px 24px;
+      border-right: 1px solid #f0f0f0;
+    }
+    .stat:last-child { border-right: none; }
+    .stat-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .stat-value {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: #111;
+    }
+
+    /* ── Section heading ─────────────────────────────────────────────────── */
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #bbb;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      margin-bottom: 16px;
+    }
+
+    /* ── Pipeline cards ──────────────────────────────────────────────────── */
+    .pipeline {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+    .phase-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 20px;
+      border: 1px solid #f0f0f0;
+      border-radius: 12px;
+      background: #fff;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .phase-card.running {
+      border-color: #111;
+      box-shadow: 0 0 0 3px rgba(17,17,17,0.04);
+    }
+    .phase-card.done {
+      border-color: #bbf7d0;
+      background: #f0fdf4;
+    }
+    .phase-card.error {
+      border-color: #fecaca;
+      background: #fef2f2;
+    }
+
+    .phase-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      background: #f5f5f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .phase-card.running .phase-icon { background: #111; }
+    .phase-card.done    .phase-icon { background: #22c55e; }
+    .phase-card.error   .phase-icon { background: #ef4444; }
+
+    .phase-info { flex: 1; min-width: 0; }
+    .phase-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #111;
+    }
+    .phase-desc {
+      font-size: 12px;
+      color: #888;
+      margin-top: 1px;
+    }
+
+    .phase-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .phase-count {
+      font-size: 20px;
+      font-weight: 700;
+      color: #111;
+      min-width: 40px;
+      text-align: right;
+    }
+    .phase-count.dim { color: #ddd; }
+
+    .phase-status-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 99px;
+    }
+    .status-idle    { background: #f5f5f5; color: #aaa; }
+    .status-running { background: #111; color: #fff; }
+    .status-done    { background: #dcfce7; color: #16a34a; }
+    .status-error   { background: #fee2e2; color: #dc2626; }
+
+    /* spinner */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+    }
+
+    /* ── Start button ────────────────────────────────────────────────────── */
+    .start-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 36px;
+    }
+    .btn-start {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 24px;
+      background: #111;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.15s;
+    }
+    .btn-start:hover:not(:disabled) {
+      opacity: 0.85;
+      transform: translateY(-1px);
+    }
+    .btn-start:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .btn-pause {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 20px;
+      background: #fff;
+      color: #111;
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-pause:hover { background: #f8f8f8; }
+    .run-hint {
+      font-size: 12px;
+      color: #aaa;
+    }
+
+    /* ── Log console ─────────────────────────────────────────────────────── */
+    .log-wrap {
+      margin-bottom: 40px;
+      display: none;
+    }
+    .log-wrap.visible { display: block; }
+    .log-console {
+      background: #fafafa;
+      border: 1px solid #f0f0f0;
+      border-radius: 10px;
+      padding: 16px;
+      height: 180px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      color: #555;
+    }
+    .log-line { line-height: 1.7; white-space: pre-wrap; word-break: break-all; }
+    .log-ts { color: #ccc; margin-right: 8px; }
+
+    /* ── Prospects list ──────────────────────────────────────────────────── */
+    .prospects-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .prospect-count {
+      font-size: 12px;
+      color: #888;
+    }
+    .prospects-table {
+      border: 1px solid #f0f0f0;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .prospect-row {
+      display: flex;
+      align-items: center;
+      padding: 13px 18px;
+      border-bottom: 1px solid #f8f8f8;
+      gap: 12px;
+      font-size: 13px;
+    }
+    .prospect-row:last-child { border-bottom: none; }
+    .prospect-row:hover { background: #fafafa; }
+    .prospect-name {
+      font-weight: 500;
+      color: #111;
+      min-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .prospect-url {
+      flex: 1;
+      color: #888;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 12px;
+    }
+    .prospect-url a {
+      color: #888;
+      text-decoration: none;
+    }
+    .prospect-url a:hover { color: #111; text-decoration: underline; }
+    .source-badge {
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 99px;
+      flex-shrink: 0;
+    }
+    .src-crustdata    { background: #eff6ff; color: #2563eb; }
+    .src-linkedin_group { background: #f5f3ff; color: #7c3aed; }
+    .src-ph_streak    { background: #fff7ed; color: #ea580c; }
+    .src-manual       { background: #f8f8f8; color: #888; }
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .sd-discovered { background: #d1d5db; }
+    .sd-queued     { background: #a5b4fc; }
+    .sd-sent       { background: #fbbf24; }
+    .sd-accepted   { background: #4ade80; }
+    .sd-messaged   { background: #f97316; }
+
+    .empty-state {
+      padding: 40px;
+      text-align: center;
+      color: #bbb;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">🪃</div>
+    PH Wingman
+  </div>
+  <div class="header-right">
+    <span id="schedulerBadge" class="scheduler-badge {{ 'badge-active' if scope.scheduler_active else 'badge-inactive' }}">
+      <span class="dot {{ 'dot-green' if scope.scheduler_active else 'dot-gray' }}"></span>
+      {{ 'Scheduler active' if scope.scheduler_active else 'Scheduler idle' }}
+    </span>
+    <a href="/config" class="settings-link">Settings</a>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- Stats -->
+  <div class="stats-row" id="statsRow">
+    <div class="stat">
+      <div class="stat-label">Total</div>
+      <div class="stat-value" id="st-total">{{ stats.get('total', 0) }}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Queued</div>
+      <div class="stat-value" id="st-queued">{{ stats.get('queued', 0) }}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Sent</div>
+      <div class="stat-value" id="st-sent">{{ stats.get('sent', 0) }}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Accepted</div>
+      <div class="stat-value" id="st-accepted">{{ stats.get('accepted', 0) }}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Messaged</div>
+      <div class="stat-value" id="st-messaged">{{ stats.get('messaged', 0) }}</div>
+    </div>
+  </div>
+
+  <!-- Start button -->
+  <div class="start-wrap">
+    <button class="btn-start" id="btnStart" onclick="startScope()" {{ 'disabled' if scope.running else '' }}>
+      {% if scope.running %}
+        <span class="spinner"></span> Running…
+      {% else %}
+        ▶ Start Scoping
+      {% endif %}
+    </button>
+    {% if scope.scheduler_active %}
+    <button class="btn-pause" onclick="pauseScheduler()">⏸ Pause Scheduler</button>
+    {% endif %}
+    <span class="run-hint" id="runHint">
+      {% if scope.running %}
+        Pipeline in progress — do not close this tab
+      {% elif scope.scheduler_active %}
+        Scheduler is running outreach in the background
+      {% else %}
+        Discover prospects from all sources, then activate the scheduler
+      {% endif %}
+    </span>
+  </div>
+
+  <!-- Pipeline -->
+  <div class="section-label">Discovery Pipeline</div>
+  <div class="pipeline" id="pipeline">
+    {% for phase in scope.phases %}
+    <div class="phase-card {{ phase.status }}" id="phase-{{ phase.id }}">
+      <div class="phase-icon">
+        {% if phase.id == 'crustdata' %}🌐
+        {% elif phase.id == 'linkedin' %}👥
+        {% else %}🏆
+        {% endif %}
+      </div>
+      <div class="phase-info">
+        <div class="phase-name">{{ phase.name }}</div>
+        <div class="phase-desc">{{ phase.desc }}</div>
+      </div>
+      <div class="phase-right">
+        <div class="phase-count {{ 'dim' if phase.count == 0 else '' }}" id="count-{{ phase.id }}">
+          {{ phase.count if phase.count > 0 else '—' }}
+        </div>
+        <div class="phase-status-badge status-{{ phase.status }}" id="badge-{{ phase.id }}">
+          {% if phase.status == 'running' %}<span class="spinner" style="border-top-color:#fff;border-color:rgba(0,0,0,.2);border-top-color:#111;"></span>{% endif %}
+          {{ phase.status }}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Log -->
+  <div class="log-wrap {{ 'visible' if scope.running or scope.log else '' }}" id="logWrap">
+    <div class="section-label">Live Log</div>
+    <div class="log-console" id="logConsole">
+      {% for entry in scope.log %}
+      <div class="log-line"><span class="log-ts">{{ entry.ts }}</span>{{ entry.msg }}</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Prospects -->
+  <div class="prospects-header">
+    <div class="section-label" style="margin-bottom:0">Prospects</div>
+    <div class="prospect-count" id="prospectCount"></div>
+  </div>
+  <div class="prospects-table" id="prospectsTable">
+    <div class="empty-state" id="emptyState">
+      No prospects yet — run the scoping pipeline to discover founders &amp; makers.
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let _running = {{ 'true' if scope.running else 'false' }};
+  let _pollTimer = null;
+
+  const SOURCE_CLASS = {
+    crustdata: 'src-crustdata',
+    linkedin_group: 'src-linkedin_group',
+    ph_streak: 'src-ph_streak',
+  };
+  const STATUS_CLASS = {
+    discovered: 'sd-discovered',
+    queued: 'sd-queued',
+    sent: 'sd-sent',
+    accepted: 'sd-accepted',
+    messaged: 'sd-messaged',
+  };
+
+  async function startScope() {
+    const btn = document.getElementById('btnStart');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Starting…';
+    try {
+      const r = await fetch('/api/scope/start', { method: 'POST' });
+      const d = await r.json();
+      if (d.error) { alert(d.error); btn.disabled = false; btn.textContent = '▶ Start Scoping'; return; }
+      _running = true;
+      schedulePoll();
+    } catch(e) {
+      alert('Error: ' + e.message);
+      btn.disabled = false;
+      btn.innerHTML = '▶ Start Scoping';
+    }
+  }
+
+  async function pauseScheduler() {
+    await fetch('/api/scheduler/pause', { method: 'POST' });
+    window.location.reload();
+  }
+
+  function schedulePoll() {
+    clearTimeout(_pollTimer);
+    _pollTimer = setTimeout(poll, _running ? 1500 : 5000);
+  }
+
+  async function poll() {
+    try {
+      const r = await fetch('/api/scope/status');
+      const d = await r.json();
+      applyStatus(d);
+      _running = d.running;
+
+      const pr = await fetch('/api/prospects/list?limit=50');
+      const pd = await pr.json();
+      renderProspects(pd.prospects || []);
+    } catch(e) {}
+    schedulePoll();
+  }
+
+  function applyStatus(d) {
+    // stats
+    const s = d.stats || {};
+    setText('st-total',    s.total    || 0);
+    setText('st-queued',   s.queued   || 0);
+    setText('st-sent',     s.sent     || 0);
+    setText('st-accepted', s.accepted || 0);
+    setText('st-messaged', s.messaged || 0);
+
+    // phases
+    (d.phases || []).forEach(p => {
+      const card  = document.getElementById('phase-' + p.id);
+      const count = document.getElementById('count-' + p.id);
+      const badge = document.getElementById('badge-' + p.id);
+      if (!card) return;
+
+      card.className = 'phase-card ' + p.status;
+      count.className = 'phase-count' + (p.count ? '' : ' dim');
+      count.textContent = p.count || '—';
+
+      badge.className = 'phase-status-badge status-' + p.status;
+      badge.innerHTML = (p.status === 'running'
+        ? '<span class="spinner" style="border-color:rgba(0,0,0,.15);border-top-color:#111;"></span> '
+        : '') + p.status;
+    });
+
+    // button
+    const btn = document.getElementById('btnStart');
+    const hint = document.getElementById('runHint');
+    if (d.running) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner" style="border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> Running…';
+      hint.textContent = 'Pipeline in progress — do not close this tab';
+    } else {
+      btn.disabled = false;
+      btn.innerHTML = '▶ Start Scoping';
+      hint.textContent = d.scheduler_active
+        ? 'Scheduler is running outreach in the background'
+        : 'Discover prospects from all sources, then activate the scheduler';
+    }
+
+    // scheduler badge
+    const sbadge = document.getElementById('schedulerBadge');
+    sbadge.className = 'scheduler-badge ' + (d.scheduler_active ? 'badge-active' : 'badge-inactive');
+    sbadge.innerHTML = `<span class="dot ${d.scheduler_active ? 'dot-green' : 'dot-gray'}"></span>${d.scheduler_active ? 'Scheduler active' : 'Scheduler idle'}`;
+
+    // log
+    const logWrap = document.getElementById('logWrap');
+    const logConsole = document.getElementById('logConsole');
+    const logs = d.log || [];
+    if (logs.length > 0 || d.running) {
+      logWrap.classList.add('visible');
+      logConsole.innerHTML = logs.map(l =>
+        `<div class="log-line"><span class="log-ts">${l.ts}</span>${escHtml(l.msg)}</div>`
+      ).join('');
+      logConsole.scrollTop = logConsole.scrollHeight;
+    }
+  }
+
+  function renderProspects(list) {
+    const table = document.getElementById('prospectsTable');
+    const empty = document.getElementById('emptyState');
+    const count = document.getElementById('prospectCount');
+
+    if (!list.length) {
+      table.innerHTML = '<div class="empty-state" id="emptyState">No prospects yet — run the scoping pipeline to discover founders &amp; makers.</div>';
+      count.textContent = '';
+      return;
+    }
+
+    count.textContent = list.length + ' prospects';
+    table.innerHTML = list.map(p => {
+      const srcCls = SOURCE_CLASS[p.source] || 'src-manual';
+      const sdCls  = STATUS_CLASS[p.status] || 'sd-discovered';
+      const name   = escHtml(p.display_name || p.ph_username || '—');
+      const url    = p.linkedin_url || '';
+      const src    = (p.source || 'manual').replace('_', ' ');
+      return `<div class="prospect-row">
+        <span class="status-dot ${sdCls}" title="${escHtml(p.status)}"></span>
+        <span class="prospect-name">${name}</span>
+        <span class="prospect-url">${url ? `<a href="${escHtml(url)}" target="_blank" rel="noopener">${escHtml(url)}</a>` : '—'}</span>
+        <span class="source-badge ${srcCls}">${escHtml(src)}</span>
+      </div>`;
+    }).join('');
+  }
+
+  function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // kick off
+  poll();
+</script>
+</body>
+</html>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Settings — PH Wingman</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--bg:#0a0a0f;--surface:#111118;--surface2:#17171f;--border:rgba(255,255,255,0.07);--accent:#ff6154;--accent2:#6366f1;--accent3:#10b981;--text:#f0f0f5;--muted:#6b7280;--dim:rgba(255,255,255,0.08)}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+    .sidebar{width:220px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 0;position:fixed;top:0;left:0;bottom:0}
+    .logo{display:flex;align-items:center;gap:10px;padding:0 20px 24px;border-bottom:1px solid var(--border)}
+    .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),#ff8c00);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+    .logo-text{font-weight:700;font-size:15px;letter-spacing:-0.3px}
+    .logo-sub{font-size:10px;color:var(--muted);font-weight:500}
+    nav{padding:16px 12px;flex:1}
+    nav a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;text-decoration:none;color:var(--muted);font-size:13.5px;font-weight:500;transition:all .15s}
+    nav a:hover,nav a.active{background:var(--dim);color:var(--text)}
+    nav a.active{color:var(--accent)}
+    .main{margin-left:220px;flex:1;padding:32px;max-width:calc(100vw - 220px)}
+    .page-title{font-size:22px;font-weight:700;letter-spacing:-0.5px;margin-bottom:28px}
+
+    /* Form Layout */
+    .form-grid{display:grid;gap:24px;max-width:720px}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:24px;max-width:720px}
+    .card-header{padding:14px 20px;border-bottom:1px solid var(--border)}
+    .card-title{font-size:14px;font-weight:700}
+    .card-desc{font-size:12px;color:var(--muted);margin-top:3px}
+    .card-body{padding:20px;display:grid;gap:16px}
+
+    .field{display:grid;gap:6px}
+    .label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px}
+    input,textarea,select{
+      padding:10px 12px;
+      border-radius:8px;
+      border:1px solid var(--border);
+      background:var(--surface2);
+      color:var(--text);
+      font-size:13px;
+      font-family:inherit;
+      outline:none;
+      transition:border-color .15s;
+      width:100%;
+    }
+    input:focus,textarea:focus{border-color:var(--accent2)}
+    textarea{resize:vertical;min-height:140px;line-height:1.6;font-family:'JetBrains Mono',monospace;font-size:12px}
+    .hint{font-size:11px;color:var(--muted)}
+
+    .btn-row{display:flex;gap:10px;margin-top:4px}
+    .btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:8px;border:none;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .15s}
+    .btn-primary{background:var(--accent);color:#fff}
+    .btn-primary:hover{opacity:.85;transform:translateY(-1px)}
+    .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+    .btn-secondary:hover{background:var(--dim)}
+
+    /* Groups table */
+    .groups-list{list-style:none}
+    .group-item{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--border);font-size:13px}
+    .group-item:last-child{border-bottom:none}
+    .group-url{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent2);text-decoration:none}
+    .group-url:hover{text-decoration:underline}
+    .group-meta{font-size:11px;color:var(--muted)}
+    .add-group-form{display:flex;gap:10px;padding:16px 20px}
+    .add-group-form input{flex:1}
+
+    .success-banner{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);border-radius:8px;padding:12px 16px;font-size:13px;color:var(--accent3);margin-bottom:20px;display:none}
+    .success-banner.show{display:block}
+  </style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">🪃</div>
+    <div><div class="logo-text">PH Wingman</div><div class="logo-sub">Launch Outreach Agent</div></div>
+  </div>
+  <nav>
+    <a href="/">📊 Dashboard</a>
+    <a href="/prospects">👥 Prospects</a>
+    <a href="/config" class="active">⚙️ Settings</a>
+  </nav>
+</aside>
+<main class="main">
+  <div class="page-title">Settings</div>
+
+  <div id="success-banner" class="success-banner {{ 'show' if request.query_params.get('saved') }}">
+    ✅ Settings saved successfully.
+  </div>
+
+  <!-- Campaign Config -->
+  <form method="POST" action="/config/save">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📅 Campaign Configuration</div>
+        <div class="card-desc">Core campaign parameters — these drive the scheduler.</div>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label class="label">Launch Date</label>
+          <input type="date" name="launch_date" value="{{ launch_date }}" required />
+          <div class="hint">Your ProductHunt launch date. Outreach runs from D-20 to D-3.</div>
+        </div>
+        <div class="field">
+          <label class="label">Daily Connection Budget</label>
+          <input type="number" name="daily_budget" value="{{ daily_budget }}" min="5" max="20" required />
+          <div class="hint">Connections sent per day. Recommended: 12–15 (safe for free accounts).</div>
+        </div>
+        <div class="field">
+          <label class="label">ProductHunt Launch URL</label>
+          <input type="url" name="ph_launch_url" value="{{ ph_launch_url }}" placeholder="https://www.producthunt.com/posts/your-product" />
+          <div class="hint">The URL to include in outreach DMs for upvoting.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Message Template -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">✉️ Message Template</div>
+        <div class="card-desc">
+          The base template for outreach DMs. The LLM will personalise this per prospect.
+          Placeholders: <code style="background:var(--dim);padding:1px 5px;border-radius:3px;font-size:11px">{first_name}</code>
+          <code style="background:var(--dim);padding:1px 5px;border-radius:3px;font-size:11px">{personalization_hook}</code>
+          <code style="background:var(--dim);padding:1px 5px;border-radius:3px;font-size:11px">{launch_url}</code>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label class="label">Template</label>
+          <textarea name="message_template">{{ message_template }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button type="submit" class="btn btn-primary">💾 Save Settings</button>
+      <a href="/" class="btn btn-secondary">← Back to Dashboard</a>
+    </div>
+  </form>
+
+  <!-- LinkedIn Groups -->
+  <div class="card" style="margin-top:32px">
+    <div class="card-header">
+      <div class="card-title">👥 LinkedIn Groups</div>
+      <div class="card-desc">Groups you're a member of. The agent will scrape their member lists for prospects.</div>
+    </div>
+    <ul class="groups-list">
+      {% for g in groups %}
+      <li class="group-item">
+        <div>
+          <a href="{{ g.url }}" target="_blank" class="group-url">{{ g.name or g.url }}</a>
+          {% if g.name and g.url != g.name %}
+          <div class="group-meta">{{ g.url }}</div>
+          {% endif %}
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="group-meta">{{ g.member_count or '?' }} members · Last scraped: {{ g.last_scraped[:10] if g.last_scraped else 'never' }}</span>
+          <button onclick="scrapeGroup('{{ g.url }}')" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:11px;cursor:pointer">Scrape</button>
+        </div>
+      </li>
+      {% else %}
+      <li class="group-item" style="color:var(--muted);justify-content:center;padding:20px">
+        No groups added yet. Add your Product Hunt LinkedIn groups below.
+      </li>
+      {% endfor %}
+    </ul>
+    <form class="add-group-form" onsubmit="addGroup(event)">
+      <input id="group-url-input" type="url" placeholder="https://www.linkedin.com/groups/12345678/" required />
+      <input id="group-name-input" type="text" placeholder="Group name (optional)" style="max-width:200px" />
+      <button type="submit" class="btn btn-primary" style="white-space:nowrap">+ Add Group</button>
+    </form>
+  </div>
+</main>
+
+<script>
+  async function addGroup(e) {
+    e.preventDefault();
+    const url = document.getElementById('group-url-input').value;
+    const name = document.getElementById('group-name-input').value;
+    const form = new FormData();
+    form.append('group_url', url);
+    form.append('name', name);
+    await fetch('/api/groups/add', { method: 'POST', body: form });
+    window.location.reload();
+  }
+
+  async function scrapeGroup(url) {
+    const form = new FormData();
+    form.append('group_url', url);
+    const res = await fetch('/api/scrape/group', { method: 'POST', body: form });
+    const data = await res.json();
+    alert(`✅ Scraping started for: ${url}`);
+  }
+</script>
+</body>
+</html>

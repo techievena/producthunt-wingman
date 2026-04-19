@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Prospects — PH Wingman</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:#0a0a0f; --surface:#111118; --surface2:#17171f; --border:rgba(255,255,255,0.07);
+      --accent:#ff6154; --accent2:#6366f1; --accent3:#10b981; --accent4:#f59e0b;
+      --text:#f0f0f5; --muted:#6b7280; --dim:rgba(255,255,255,0.08);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+    .sidebar{width:220px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 0;position:fixed;top:0;left:0;bottom:0}
+    .logo{display:flex;align-items:center;gap:10px;padding:0 20px 24px;border-bottom:1px solid var(--border)}
+    .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),#ff8c00);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+    .logo-text{font-weight:700;font-size:15px;letter-spacing:-0.3px}
+    .logo-sub{font-size:10px;color:var(--muted);font-weight:500}
+    nav{padding:16px 12px;flex:1}
+    nav a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;text-decoration:none;color:var(--muted);font-size:13.5px;font-weight:500;transition:all .15s}
+    nav a:hover,nav a.active{background:var(--dim);color:var(--text)}
+    nav a.active{color:var(--accent)}
+    .main{margin-left:220px;flex:1;padding:32px;max-width:calc(100vw - 220px)}
+    .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+    .page-title{font-size:22px;font-weight:700;letter-spacing:-0.5px}
+
+    /* Filters */
+    .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+    .filter-btn{padding:6px 14px;border-radius:99px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .15s}
+    .filter-btn:hover{border-color:rgba(255,255,255,0.2);color:var(--text)}
+    .filter-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(255,97,84,0.08)}
+
+    /* Table */
+    .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+    table{width:100%;border-collapse:collapse}
+    thead tr{border-bottom:1px solid var(--border)}
+    th{padding:11px 16px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;text-align:left}
+    tbody tr{border-bottom:1px solid var(--border);transition:background .12s}
+    tbody tr:last-child{border-bottom:none}
+    tbody tr:hover{background:var(--dim)}
+    td{padding:12px 16px;font-size:13px;vertical-align:middle}
+    .td-name{font-weight:600}
+    .td-url{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .td-url a{color:var(--accent2);text-decoration:none}
+    .td-url a:hover{text-decoration:underline}
+
+    /* Status badge */
+    .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600}
+    .b-discovered{background:rgba(107,114,128,0.15);color:var(--muted)}
+    .b-queued{background:rgba(99,102,241,0.15);color:var(--accent2)}
+    .b-sending{background:rgba(245,158,11,0.15);color:var(--accent4)}
+    .b-sent{background:rgba(245,158,11,0.2);color:var(--accent4)}
+    .b-accepted{background:rgba(16,185,129,0.15);color:var(--accent3)}
+    .b-messaging,.b-messaged{background:rgba(255,97,84,0.15);color:var(--accent)}
+    .b-replied{background:rgba(255,97,84,0.3);color:var(--accent)}
+    .b-skipped{background:rgba(107,114,128,0.1);color:var(--muted)}
+
+    .source-badge{font-size:10px;padding:2px 8px;border-radius:4px;background:var(--dim);color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
+    .streak-badge{font-size:11px;color:var(--accent4);font-weight:600}
+    .sched-date{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+
+    /* Pagination */
+    .pagination{display:flex;gap:8px;margin-top:18px;justify-content:flex-end}
+    .pag-btn{padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .15s}
+    .pag-btn:hover{background:var(--dim)}
+
+    .empty{padding:40px;text-align:center;color:var(--muted);font-size:14px}
+  </style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">🪃</div>
+    <div><div class="logo-text">PH Wingman</div><div class="logo-sub">Launch Outreach Agent</div></div>
+  </div>
+  <nav>
+    <a href="/">📊 Dashboard</a>
+    <a href="/prospects" class="active">👥 Prospects</a>
+    <a href="/config">⚙️ Settings</a>
+  </nav>
+</aside>
+<main class="main">
+  <div class="header">
+    <div>
+      <div class="page-title">Prospects <span style="color:var(--muted);font-weight:400;font-size:16px">({{ stats.total or 0 }})</span></div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button style="padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;font-weight:600;cursor:pointer" onclick="document.getElementById('import-modal').style.display='flex'">+ Import URLs</button>
+    </div>
+  </div>
+
+  <!-- Status Filters -->
+  <div class="filters">
+    <a href="/prospects" class="filter-btn {{ 'active' if not current_status }}">All ({{ stats.total or 0 }})</a>
+    <a href="/prospects?status=discovered" class="filter-btn {{ 'active' if current_status=='discovered' }}">Discovered ({{ stats.get('discovered',0) }})</a>
+    <a href="/prospects?status=queued"     class="filter-btn {{ 'active' if current_status=='queued' }}">Queued ({{ stats.get('queued',0) }})</a>
+    <a href="/prospects?status=sent"       class="filter-btn {{ 'active' if current_status=='sent' }}">Sent ({{ stats.get('sent',0) }})</a>
+    <a href="/prospects?status=accepted"   class="filter-btn {{ 'active' if current_status=='accepted' }}">Accepted ({{ stats.get('accepted',0) }})</a>
+    <a href="/prospects?status=messaged"   class="filter-btn {{ 'active' if current_status=='messaged' }}">Messaged ({{ stats.get('messaged',0) }})</a>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    {% if prospects %}
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>LinkedIn</th>
+          <th>Source</th>
+          <th>Streak</th>
+          <th>Status</th>
+          <th>Scheduled</th>
+          <th>Message</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in prospects %}
+        <tr>
+          <td>
+            <div class="td-name">{{ p.display_name or '—' }}</div>
+            <div style="font-size:11px;color:var(--muted)">{{ p.headline[:50] + '…' if p.headline and p.headline|length > 50 else p.headline or '' }}</div>
+          </td>
+          <td class="td-url">
+            <a href="{{ p.linkedin_url }}" target="_blank">{{ p.linkedin_url.replace('https://www.linkedin.com/in/','@') }}</a>
+          </td>
+          <td><span class="source-badge">{{ p.source }}</span></td>
+          <td>{% if p.ph_streak_days %}<span class="streak-badge">🔥 {{ p.ph_streak_days }}d</span>{% else %}<span style="color:var(--muted)">—</span>{% endif %}</td>
+          <td>
+            <span class="badge b-{{ p.status }}">{{ p.status }}</span>
+          </td>
+          <td><span class="sched-date">{{ p.scheduled_date or '—' }}</span></td>
+          <td>
+            {% if p.outreach_message %}
+              <button style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:11px;cursor:pointer" onclick="showMsg('{{ p.outreach_message[:200]|replace("'","\\'")|replace('\n',' ')|e }}')">Preview</button>
+            {% else %}
+              <span style="font-size:11px;color:var(--muted)">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">
+      No prospects {{ 'with status "' + current_status + '"' if current_status else '' }} yet.<br>
+      <a href="/" style="color:var(--accent);text-decoration:none">Go to dashboard →</a> and click "Scrape PH" to get started.
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Pagination -->
+  {% if page > 1 or has_more %}
+  <div class="pagination">
+    {% if page > 1 %}<a href="/prospects?status={{ current_status }}&page={{ page-1 }}" class="pag-btn">← Prev</a>{% endif %}
+    <span style="padding:6px 14px;font-size:12px;color:var(--muted)">Page {{ page }}</span>
+    {% if has_more %}<a href="/prospects?status={{ current_status }}&page={{ page+1 }}" class="pag-btn">Next →</a>{% endif %}
+  </div>
+  {% endif %}
+</main>
+
+<!-- Message Preview Modal -->
+<div id="msg-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;max-width:520px;width:90%;position:relative">
+    <div style="font-size:13px;font-weight:700;margin-bottom:12px">Message Preview</div>
+    <div id="msg-text" style="font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap;background:var(--surface2);border-radius:8px;padding:14px;max-height:300px;overflow-y:auto"></div>
+    <button onclick="document.getElementById('msg-modal').style.display='none'" style="margin-top:14px;padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;cursor:pointer">Close</button>
+  </div>
+</div>
+
+<!-- Import URLs Modal -->
+<div id="import-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;max-width:480px;width:90%">
+    <div style="font-size:13px;font-weight:700;margin-bottom:12px">Import LinkedIn URLs</div>
+    <textarea id="import-urls" placeholder="Paste LinkedIn URLs, one per line:&#10;https://www.linkedin.com/in/johndoe&#10;https://www.linkedin.com/in/janedoe" style="width:100%;height:160px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-size:12px;font-family:'JetBrains Mono',monospace;resize:vertical"></textarea>
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <button onclick="importUrls()" style="padding:8px 16px;border-radius:8px;background:var(--accent);border:none;color:#fff;font-size:13px;font-weight:600;cursor:pointer">Import</button>
+      <button onclick="document.getElementById('import-modal').style.display='none'" style="padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;cursor:pointer">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function showMsg(text) {
+  document.getElementById('msg-text').textContent = text;
+  document.getElementById('msg-modal').style.display = 'flex';
+}
+async function importUrls() {
+  const raw = document.getElementById('import-urls').value;
+  const urls = raw.split('\n').map(s => s.trim()).filter(s => s.includes('linkedin.com/in/'));
+  if (!urls.length) { alert('No valid LinkedIn URLs found'); return; }
+  const res = await fetch('/api/prospects/import', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(urls),
+  });
+  const data = await res.json();
+  alert(`✅ Imported ${data.added} URLs`);
+  window.location.reload();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+# Gitignore
+.env
+.venv/
+__pycache__/
+*.pyc
+wingman.db
+.browser_profile/
