@@ -1,7 +1,8 @@
 {
   "name": "producthunt-wingman",
-  "version": "1.4.0",
-  "description": "Premium PH outreach agent with deep profile enrichment, LLM personalization (GPT-4/Claude/Gemini), and live Kanban monitoring.",
+  "slug": "producthunt-wingman",
+  "version": "1.6.0",
+  "description": "Premium PH outreach agent. Executes locally to automate community discovery, deep enrichment, and LinkedIn engagement with full privacy control.",
   "author": "techievena",
   "license": "MIT",
   "source": "https://github.com/techievena/producthunt-wingman",
@@ -28,7 +29,9 @@
     "python": ">=3.9"
   },
   "requiredEnv": [
-    "OPENAI_API_KEY"
+    "OPENAI_API_KEY",
+    "LAUNCH_DATE",
+    "PH_LAUNCH_URL"
   ],
   "requirements": {
     "bins": [
