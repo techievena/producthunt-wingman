@@ -42,14 +42,20 @@ _RICH_RE = re.compile(r'\[/?[^\]]+\]')
 _scope = {
     "running": False,
     "phases": [
-        {"id": "crustdata", "name": "Crustdata Search",
-         "desc": "Find founders & makers via API filters",
-         "status": "idle", "count": 0},
-        {"id": "linkedin",  "name": "LinkedIn Groups",
+        {"id": "linkedin",     "name": "LinkedIn Groups",
          "desc": f"Scrape {len(config.LINKEDIN_GROUPS)} PH community groups",
          "status": "idle", "count": 0},
-        {"id": "ph",        "name": "ProductHunt Streaks",
+        {"id": "ph",          "name": "ProductHunt Streaks",
          "desc": "Extract LinkedIn URLs from top streak members",
+         "status": "idle", "count": 0},
+        {"id": "enrich",      "name": "Enrichment",
+         "desc": "Extract rich profile data (headline, skills, posts)",
+         "status": "idle", "count": 0},
+         {"id": "personalize", "name": "Personalize",
+         "desc": "LLM generates tailored outreach messages",
+         "status": "idle", "count": 0},
+         {"id": "schedule",    "name": "Schedule",
+         "desc": "Allocate prospects across send window",
          "status": "idle", "count": 0},
     ],
     "log": [],
@@ -77,26 +83,13 @@ async def _run_scope():
         p["status"] = "idle"
         p["count"] = 0
 
-    # ── Phase 1: Crustdata ──────────────────────────────────────────────
+    # ── Phase 1: LinkedIn Groups ────────────────────────────────────────
     _scope["phases"][0]["status"] = "running"
-    _log("→ Starting Crustdata discovery...")
-    try:
-        from scheduler import run_crustdata_discovery_job
-        count = await run_crustdata_discovery_job()
-        _scope["phases"][0]["count"] = count or 0
-        _scope["phases"][0]["status"] = "done"
-        _log(f"✓ Crustdata: {_scope['phases'][0]['count']} prospects added")
-    except Exception as e:
-        _scope["phases"][0]["status"] = "error"
-        _log(f"✗ Crustdata failed: {e}")
-
-    # ── Phase 2: LinkedIn Groups ────────────────────────────────────────
-    _scope["phases"][1]["status"] = "running"
     _log(f"→ Scraping {len(config.LINKEDIN_GROUPS)} LinkedIn groups...")
     total_li = 0
     if not _agent:
         _log("✗ LinkedIn agent not available — skipping")
-        _scope["phases"][1]["status"] = "error"
+        _scope["phases"][0]["status"] = "error"
     else:
         from ph_scraper import ingest_linkedin_urls
         for group_url in config.LINKEDIN_GROUPS:
@@ -109,30 +102,97 @@ async def _run_scope():
             except Exception as e:
                 _log(f"  ✗ {e}")
             await asyncio.sleep(2)
-        _scope["phases"][1]["count"] = total_li
-        _scope["phases"][1]["status"] = "done"
+        _scope["phases"][0]["count"] = total_li
+        _scope["phases"][0]["status"] = "done"
         _log(f"✓ LinkedIn groups: {total_li} profiles added")
 
-    # ── Phase 3: PH Streaks ─────────────────────────────────────────────
-    _scope["phases"][2]["status"] = "running"
+    # ── Phase 2: PH Streaks ─────────────────────────────────────────────
+    _scope["phases"][1]["status"] = "running"
     _log("→ Scraping ProductHunt streak leaderboard...")
     try:
         from ph_scraper import ingest_ph_users_to_db
-        count = await ingest_ph_users_to_db(max_users=50)
-        _scope["phases"][2]["count"] = count or 0
-        _scope["phases"][2]["status"] = "done"
+        count = await ingest_ph_users_to_db(max_users=1000)
+        _scope["phases"][1]["count"] = count or 0
+        _scope["phases"][1]["status"] = "done"
         _log(f"✓ PH Streaks: {count} profiles added")
     except Exception as e:
-        _scope["phases"][2]["status"] = "error"
+        _scope["phases"][1]["status"] = "error"
         _log(f"✗ PH Streaks failed: {e}")
+
+    # ── Phase 3: Enrichment ─────────────────────────────────────────────
+    _scope["phases"][2]["status"] = "running"
+    _log("→ Enriching newly discovered profiles...")
+    if not _agent:
+        _log("✗ LinkedIn agent not available — skipping")
+        _scope["phases"][2]["status"] = "error"
+    else:
+        all_prospects = await db.get_all_prospects(limit=10000)
+        to_enrich = [
+            p for p in all_prospects
+            if p["status"] == "discovered" and not p.get("headline")
+        ]
+        if to_enrich:
+            _log(f"  Enriching {len(to_enrich)} prospects...")
+            enriched_count = 0
+            for p in to_enrich:
+                try:
+                    data = await _agent.enrich_profile(p["linkedin_url"])
+                    if data:
+                        await db.upsert_prospect({**p, **data})
+                        enriched_count += 1
+                except Exception as e:
+                    _log(f"  ✗ {p['linkedin_url']}: {e}")
+            _scope["phases"][2]["count"] = enriched_count
+            _log(f"✓ Enrichment: {enriched_count} profiles updated")
+        else:
+            _log("✓ No enrichment needed")
+        _scope["phases"][2]["status"] = "done"
+
+    # ── Phase 4: Personalize ────────────────────────────────────────────
+    _scope["phases"][3]["status"] = "running"
+    _log("→ Generating personalized outreach messages...")
+    try:
+        import personalizer
+        all_prospects = await db.get_all_prospects(limit=10000)
+        unpersonalized = [
+            p for p in all_prospects
+            if p["status"] == "discovered" and not p.get("outreach_message")
+        ]
+        if unpersonalized:
+            _log(f"  Personalizing {len(unpersonalized)} prospects...")
+            msg_count = await personalizer.personalize_batch(unpersonalized)
+            _scope["phases"][3]["count"] = msg_count
+            _log(f"✓ Personalized {msg_count} messages")
+        else:
+            _scope["phases"][3]["count"] = 0
+            _log("✓ All prospects already have messages")
+        _scope["phases"][3]["status"] = "done"
+    except Exception as e:
+        _scope["phases"][3]["status"] = "error"
+        _log(f"✗ Personalization failed: {e}")
+
+    # ── Phase 5: Schedule ───────────────────────────────────────────────
+    _scope["phases"][4]["status"] = "running"
+    _log("→ Allocating send schedule...")
+    try:
+        from scheduler import allocate_schedule
+        scheduled = await allocate_schedule()
+        _scope["phases"][4]["count"] = scheduled
+        _scope["phases"][4]["status"] = "done"
+        _log(f"✓ Scheduled {scheduled} prospects across send window")
+    except Exception as e:
+        _scope["phases"][4]["status"] = "error"
+        _log(f"✗ Scheduling failed: {e}")
 
     # ── Activate scheduler ──────────────────────────────────────────────
     await db.upsert_config("scheduler_running", "true")
     await db.upsert_config("scanner_running", "true")
     _scope["scheduler_active"] = True
-    _scope["total"] = sum(p["count"] for p in _scope["phases"])
-    _log(f"✓ Scheduler activated — {_scope['total']} total prospects queued for outreach")
+    stats = await db.get_pipeline_stats()
+    _scope["total"] = stats.get("total", 0)
+    _log(f"✓ Scheduler activated — {_scope['total']} total prospects in pipeline")
     _scope["running"] = False
+
 
 
 # ---------------------------------------------------------------------------
@@ -172,7 +232,7 @@ async def scope_status():
 
 
 @app.get("/api/prospects/list")
-async def list_prospects(limit: int = 100, offset: int = 0):
+async def list_prospects(limit: int = 5000, offset: int = 0):
     rows = await db.get_all_prospects(limit=limit, offset=offset)
     return {"prospects": rows, "count": len(rows)}
 
@@ -206,6 +266,91 @@ async def save_config(
     await db.upsert_config("ph_launch_url", ph_launch_url)
     await db.upsert_config("message_template", message_template)
     return RedirectResponse("/config?saved=1", status_code=303)
+
+
+@app.get("/api/status")
+async def api_status():
+    stats = await db.get_pipeline_stats()
+    scheduler_active = await db.get_config("scheduler_running") == "true"
+    launch_date = await db.get_config("launch_date") or config.LAUNCH_DATE
+    return {
+        "status": "running" if scheduler_active else "idle",
+        "scheduler_active": scheduler_active,
+        "launch_date": launch_date,
+        "stats": stats,
+    }
+
+
+@app.post("/api/pipeline/personalize")
+async def api_personalize(background_tasks: BackgroundTasks):
+    """Manually trigger personalization for all un-messaged discovered prospects."""
+    async def _do():
+        import personalizer
+        all_prospects = await db.get_all_prospects(limit=10000)
+        targets = [
+            p for p in all_prospects
+            if p["status"] == "discovered" and not p.get("outreach_message")
+        ]
+        if targets:
+            await personalizer.personalize_batch(targets)
+    background_tasks.add_task(_do)
+    return {"status": "started"}
+
+
+@app.post("/api/pipeline/allocate")
+async def api_allocate():
+    """Manually trigger schedule allocation."""
+    from scheduler import allocate_schedule
+    count = await allocate_schedule()
+    return {"status": "ok", "scheduled": count}
+
+
+@app.get("/api/prospects/{id}")
+async def api_prospect_detail(id: int):
+    """Fetch detailed data for a single prospect."""
+    async with aiosqlite.connect(db.DB_PATH) as _db:
+        _db.row_factory = aiosqlite.Row
+        async with _db.execute("SELECT * FROM prospects WHERE id=?", (id,)) as cur:
+            row = await cur.fetchone()
+            if not row:
+                return {"error": "Prospect not found"}
+            return dict(row)
+
+
+@app.post("/api/prospects/{id}/update")
+async def api_prospect_update(id: int, data: dict):
+    """Update prospect fields (message, status, etc.)"""
+    async with aiosqlite.connect(db.DB_PATH) as _db:
+        _db.row_factory = aiosqlite.Row
+        async with _db.execute("SELECT linkedin_url FROM prospects WHERE id=?", (id,)) as cur:
+            row = await cur.fetchone()
+            if not row:
+                return {"error": "Prospect not found"}
+            url = row["linkedin_url"]
+
+    # Use existing helper for status/timestamp updates
+    if "status" in data:
+        await db.update_prospect_status(url, data["status"])
+
+    # For other fields, we need a manual update here as update_prospect_status is restricted
+    update_fields = []
+    vals = []
+    allowed = ["outreach_message", "display_name", "headline", "location", "company", "priority"]
+    for k in allowed:
+        if k in data:
+            update_fields.append(f"{k}=?")
+            vals.append(data[k])
+
+    if update_fields:
+        vals.append(id)
+        async with aiosqlite.connect(db.DB_PATH) as _db:
+            await _db.execute(
+                f"UPDATE prospects SET {', '.join(update_fields)}, updated_at=strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id=?",
+                vals
+            )
+            await _db.commit()
+
+    return {"status": "ok"}
 
 
 @app.post("/api/scheduler/pause")

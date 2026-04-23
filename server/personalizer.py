@@ -1,8 +1,8 @@
 """
 LLM-powered message personalizer for ProductHunt Wingman.
 
-Takes an enriched prospect record and generates a personalized outreach DM.
-Uses ALL available Crustdata enrichment fields — headline, company, skills,
+Takes a prospect record and generates a personalized outreach DM.
+Uses available profile fields — headline, company, skills,
 recent LinkedIn post snippet, PH streak, and discovery source — to craft
 messages that feel genuinely hand-written.
 """
@@ -17,26 +17,20 @@ def _get_llm():
     if config.OPENAI_API_KEY:
         try:
             from langchain_openai import ChatOpenAI
-            return ChatOpenAI(
-                model="gpt-4o-mini",
-                api_key=config.OPENAI_API_KEY,
-                temperature=0.7,
-                max_tokens=300,
-            )
-        except ImportError:
-            rprint("[yellow]langchain-openai not installed[/yellow]")
+            return ChatOpenAI(model="gpt-4o-mini", api_key=config.OPENAI_API_KEY, temperature=0.7)
+        except ImportError: pass
 
     if config.ANTHROPIC_API_KEY:
         try:
             from langchain_anthropic import ChatAnthropic
-            return ChatAnthropic(
-                model="claude-3-haiku-20240307",
-                api_key=config.ANTHROPIC_API_KEY,
-                temperature=0.7,
-                max_tokens=300,
-            )
-        except ImportError:
-            rprint("[yellow]langchain-anthropic not installed[/yellow]")
+            return ChatAnthropic(model="claude-3-haiku-20240307", api_key=config.ANTHROPIC_API_KEY, temperature=0.7)
+        except ImportError: pass
+
+    if config.GOOGLE_API_KEY:
+        try:
+            from langchain_google_genai import ChatGoogleGenerativeAI
+            return ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=config.GOOGLE_API_KEY, temperature=0.7)
+        except ImportError: pass
 
     return None
 
@@ -99,9 +93,8 @@ def _build_context_block(prospect: dict) -> str:
         "ph_streak":              "Found on PH streak leaderboard",
         "ph_post_engager":        "Engaged with ProductHunt's LinkedIn posts",
         "ph_launch_post_author":  "Publicly posted about a PH launch on LinkedIn",
-        "crustdata_search":       "Active maker/founder found via LinkedIn",
         "linkedin_group":         "Member of a PH-related LinkedIn group",
-        "crustdata_discovery":    "Discovered via Crustdata",
+        "manual":                 "Manually added prospect",
     }
     source_desc = source_labels.get(source, "")
     if source_desc:

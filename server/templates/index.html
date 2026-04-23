@@ -1,461 +1,195 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PH Wingman</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>PH Wingman — Mission Control</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08080c;--s:#12121a;--b:#1e1e2e;--t:#e2e2f0;--mu:#6b6b8a;
+  --ac:#ff6154;--gr:#22c55e;--bl:#3b82f6;--pu:#a855f7;--am:#f59e0b;
+  --r:12px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);font-size:13px;min-height:100vh;overflow-x:hidden}
 
-    body {
-      font-family: 'Inter', system-ui, sans-serif;
-      background: #fff;
-      color: #111;
-      min-height: 100vh;
-      font-size: 14px;
-      line-height: 1.5;
-    }
+/* Header */
+header{display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:64px;background:var(--s);border-bottom:1px solid var(--b);position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;letter-spacing:-0.2px}
+.logo-icon{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--ac),#ff8c7a);display:flex;align-items:center;justify-content:center;font-size:16px}
+.header-r{display:flex;align-items:center;gap:12px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:99px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px}
+.pill-r{background:rgba(255,97,84,.1);border:1px solid rgba(255,97,84,.2);color:var(--ac)}
+.pill-g{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);color:var(--gr)}
+.pill-m{background:rgba(107,107,138,.1);border:1px solid var(--b);color:var(--mu)}
+.dot{width:7px;height:7px;border-radius:50%}
+.dg{background:var(--gr);animation:blink 2s infinite}
+.dm{background:var(--mu)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.hlink{color:var(--mu);text-decoration:none;font-size:12px;font-weight:600;transition:all .15s;padding:6px 10px;border-radius:8px}
+.hlink:hover{color:var(--t);background:rgba(255,255,255,.05)}
 
-    /* ── Header ─────────────────────────────────────────────────────────── */
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 40px;
-      height: 56px;
-      border-bottom: 1px solid #f0f0f0;
-    }
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 600;
-      font-size: 15px;
-      letter-spacing: -0.3px;
-    }
-    .logo-mark {
-      width: 28px;
-      height: 28px;
-      background: #111;
-      border-radius: 7px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-    }
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    .scheduler-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border-radius: 99px;
-      font-size: 12px;
-      font-weight: 500;
-    }
-    .badge-active   { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
-    .badge-inactive { background: #f8f8f8; color: #888; border: 1px solid #e8e8e8; }
-    .dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-    }
-    .dot-green { background: #22c55e; animation: blink 2s infinite; }
-    .dot-gray  { background: #ccc; }
-    @keyframes blink {
-      0%,100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
-    .settings-link {
-      font-size: 13px;
-      color: #888;
-      text-decoration: none;
-      font-weight: 500;
-    }
-    .settings-link:hover { color: #111; }
+/* Page */
+.page{max-width:1400px;margin:0 auto;padding:32px 32px 100px}
 
-    /* ── Page wrapper ────────────────────────────────────────────────────── */
-    .page {
-      max-width: 860px;
-      margin: 0 auto;
-      padding: 48px 40px 80px;
-    }
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--b);border:1px solid var(--b);border-radius:var(--r);overflow:hidden;margin-bottom:32px;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.stat{background:var(--s);padding:20px 20px 18px}
+.stat-l{font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.stat-v{font-size:28px;font-weight:700;letter-spacing:-1px}
 
-    /* ── Stats row ───────────────────────────────────────────────────────── */
-    .stats-row {
-      display: flex;
-      gap: 0;
-      border: 1px solid #f0f0f0;
-      border-radius: 12px;
-      overflow: hidden;
-      margin-bottom: 48px;
-    }
-    .stat {
-      flex: 1;
-      padding: 20px 24px;
-      border-right: 1px solid #f0f0f0;
-    }
-    .stat:last-child { border-right: none; }
-    .stat-label {
-      font-size: 11px;
-      font-weight: 600;
-      color: #aaa;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 6px;
-    }
-    .stat-value {
-      font-size: 26px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      color: #111;
-    }
+/* Actions */
+.actions{display:flex;align-items:center;gap:12px;margin-bottom:32px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:9px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .15s;border:none}
+.btn-p{background:var(--ac);color:#fff;box-shadow:0 4px 12px rgba(255,97,84,.2)}
+.btn-p:hover:not(:disabled){background:#ff7a6e;transform:translateY(-1px);box-shadow:0 6px 16px rgba(255,97,84,.3)}
+.btn-p:disabled{opacity:.4;cursor:not-allowed}
+.btn-g{background:var(--s);color:var(--t);border:1px solid var(--b)}
+.btn-g:hover{border-color:#3a3a5a;background:#1a1a25}
+.run-hint{font-size:12px;color:var(--mu);margin-left:8px;font-style:italic}
 
-    /* ── Section heading ─────────────────────────────────────────────────── */
-    .section-label {
-      font-size: 11px;
-      font-weight: 600;
-      color: #bbb;
-      text-transform: uppercase;
-      letter-spacing: 0.7px;
-      margin-bottom: 16px;
-    }
+/* Section label */
+.slabel{font-size:11px;font-weight:800;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.slabel::after{content:'';height:1px;background:var(--b);flex:1}
 
-    /* ── Pipeline cards ──────────────────────────────────────────────────── */
-    .pipeline {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 32px;
-    }
-    .phase-card {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 18px 20px;
-      border: 1px solid #f0f0f0;
-      border-radius: 12px;
-      background: #fff;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .phase-card.running {
-      border-color: #111;
-      box-shadow: 0 0 0 3px rgba(17,17,17,0.04);
-    }
-    .phase-card.done {
-      border-color: #bbf7d0;
-      background: #f0fdf4;
-    }
-    .phase-card.error {
-      border-color: #fecaca;
-      background: #fef2f2;
-    }
+/* Pipeline */
+.pipeline{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:40px}
+.pc{display:flex;flex-direction:column;gap:12px;padding:18px;border-radius:var(--r);background:var(--s);border:1px solid var(--b);transition:all .2s}
+.pc.running{border-color:var(--ac);background:rgba(255,97,84,.02);box-shadow:0 0 20px rgba(255,97,84,.05)}
+.pc.done{border-color:rgba(34,197,94,.2)}
+.pi{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-size:16px}
+.pc.running .pi{background:rgba(255,97,84,.15);color:var(--ac)}
+.pc.done .pi{background:rgba(34,197,94,.15);color:var(--gr)}
+.pname{font-size:14px;font-weight:700;margin-top:4px}
+.pdesc{font-size:11px;color:var(--mu);line-height:1.4}
+.pr{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.pcnt{font-size:22px;font-weight:800}
+.pcnt.dim{color:#2a2a3e}
+.pbadge{font-size:10px;font-weight:800;padding:4px 10px;border-radius:99px;text-transform:uppercase}
+.si{background:rgba(107,107,138,.1);color:var(--mu)}
+.sr{background:rgba(255,97,84,.2);color:var(--ac)}
+.sd{background:rgba(34,197,94,.15);color:var(--gr)}
+.se{background:rgba(239,68,68,.15);color:#ef4444}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:12px;height:12px;border:2px solid rgba(255,97,84,.2);border-top-color:var(--ac);border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
 
-    .phase-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 9px;
-      background: #f5f5f5;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      flex-shrink: 0;
-    }
-    .phase-card.running .phase-icon { background: #111; }
-    .phase-card.done    .phase-icon { background: #22c55e; }
-    .phase-card.error   .phase-icon { background: #ef4444; }
+/* Log */
+.log-w{margin-bottom:40px;display:none}
+.log-w.vis{display:block}
+.log-c{background:#040408;border:1px solid var(--b);border-radius:var(--r);padding:16px;height:200px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b6b8a;box-shadow:inset 0 2px 10px rgba(0,0,0,.3)}
+.ll{line-height:1.8;white-space:pre-wrap;margin-bottom:2px}
+.lt{color:#2a2a3e;margin-right:12px}
+.lm.ok{color:var(--gr)}
+.lm.er{color:#ef4444}
 
-    .phase-info { flex: 1; min-width: 0; }
-    .phase-name {
-      font-size: 14px;
-      font-weight: 600;
-      color: #111;
-    }
-    .phase-desc {
-      font-size: 12px;
-      color: #888;
-      margin-top: 1px;
-    }
+/* Kanban */
+.kanban{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+.col{background:var(--s);border:1px solid var(--b);border-radius:var(--r);display:flex;flex-direction:column;height:600px;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.col-head{padding:16px 18px;border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between}
+.col-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700}
+.col-cnt{font-size:16px;font-weight:800;opacity:.8}
+.col-body{flex:1;overflow-y:auto;padding:12px}
+.col-body::-webkit-scrollbar{width:4px}
+.col-body::-webkit-scrollbar-thumb{background:var(--b);border-radius:4px}
 
-    .phase-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-shrink: 0;
-    }
-    .phase-count {
-      font-size: 20px;
-      font-weight: 700;
-      color: #111;
-      min-width: 40px;
-      text-align: right;
-    }
-    .phase-count.dim { color: #ddd; }
+.kcard{background:var(--bg);border:1px solid var(--b);border-radius:10px;padding:14px;margin-bottom:10px;cursor:pointer;transition:all .15s}
+.kcard:hover{border-color:#4a4a6a;transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.kcard-name{font-size:13px;font-weight:600;color:var(--t);margin-bottom:6px}
+.kcard-meta{font-size:11px;color:var(--mu);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.kbadge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px}
+.src-linkedin_group{background:rgba(168,85,247,.15);color:var(--pu)}
+.src-ph_streak{background:rgba(245,158,11,.15);color:var(--am)}
+.src-manual{background:rgba(107,107,138,.12);color:var(--mu)}
+.streak{font-weight:700;color:var(--am)}
+.kcard-ts{font-size:10px;color:#3a3a5a;margin-top:4px;display:block}
 
-    .phase-status-badge {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 9px;
-      border-radius: 99px;
-    }
-    .status-idle    { background: #f5f5f5; color: #aaa; }
-    .status-running { background: #111; color: #fff; }
-    .status-done    { background: #dcfce7; color: #16a34a; }
-    .status-error   { background: #fee2e2; color: #dc2626; }
+/* Modal */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);z-index:200;display:none;align-items:center;justify-content:center;padding:40px}
+.modal-overlay.vis{display:flex}
+.modal{background:var(--s);border:1px solid var(--b);border-radius:20px;width:100%;max-width:900px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 100px rgba(0,0,0,.5)}
+.modal-head{padding:24px 32px;border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:18px;font-weight:700;display:flex;align-items:center;gap:12px}
+.modal-body{padding:32px;overflow-y:auto;flex:1;display:grid;grid-template-columns:1fr 1fr;gap:32px}
+.modal-foot{padding:20px 32px;background:rgba(0,0,0,.2);border-top:1px solid var(--b);display:flex;align-items:center;justify-content:flex-end;gap:12px}
 
-    /* spinner */
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .spinner {
-      width: 14px; height: 14px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      display: inline-block;
-    }
+.genome-section{margin-bottom:24px}
+.genome-label{font-size:10px;font-weight:800;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.genome-val{font-size:14px;color:var(--t);line-height:1.5}
+.genome-val.dim{color:var(--mu);font-style:italic}
+.tag-list{display:flex;flex-wrap:wrap;gap:6px}
+.tag{background:var(--b);padding:4px 10px;border-radius:6px;font-size:12px}
 
-    /* ── Start button ────────────────────────────────────────────────────── */
-    .start-wrap {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 36px;
-    }
-    .btn-start {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 11px 24px;
-      background: #111;
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
-      font-family: inherit;
-      cursor: pointer;
-      transition: opacity 0.15s, transform 0.15s;
-    }
-    .btn-start:hover:not(:disabled) {
-      opacity: 0.85;
-      transform: translateY(-1px);
-    }
-    .btn-start:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    .btn-pause {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 11px 20px;
-      background: #fff;
-      color: #111;
-      border: 1px solid #e8e8e8;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
-      font-family: inherit;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    .btn-pause:hover { background: #f8f8f8; }
-    .run-hint {
-      font-size: 12px;
-      color: #aaa;
-    }
+.msg-editor{display:flex;flex-direction:column;height:100%}
+.msg-textarea{flex:1;background:#08080c;border:1px solid var(--b);border-radius:12px;padding:16px;color:var(--t);font-family:inherit;font-size:14px;line-height:1.6;resize:none;margin-bottom:12px;outline:none;transition:border-color .2s}
+.msg-textarea:focus{border-color:var(--ac)}
 
-    /* ── Log console ─────────────────────────────────────────────────────── */
-    .log-wrap {
-      margin-bottom: 40px;
-      display: none;
-    }
-    .log-wrap.visible { display: block; }
-    .log-console {
-      background: #fafafa;
-      border: 1px solid #f0f0f0;
-      border-radius: 10px;
-      padding: 16px;
-      height: 180px;
-      overflow-y: auto;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11.5px;
-      color: #555;
-    }
-    .log-line { line-height: 1.7; white-space: pre-wrap; word-break: break-all; }
-    .log-ts { color: #ccc; margin-right: 8px; }
-
-    /* ── Prospects list ──────────────────────────────────────────────────── */
-    .prospects-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
-    }
-    .prospect-count {
-      font-size: 12px;
-      color: #888;
-    }
-    .prospects-table {
-      border: 1px solid #f0f0f0;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    .prospect-row {
-      display: flex;
-      align-items: center;
-      padding: 13px 18px;
-      border-bottom: 1px solid #f8f8f8;
-      gap: 12px;
-      font-size: 13px;
-    }
-    .prospect-row:last-child { border-bottom: none; }
-    .prospect-row:hover { background: #fafafa; }
-    .prospect-name {
-      font-weight: 500;
-      color: #111;
-      min-width: 140px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .prospect-url {
-      flex: 1;
-      color: #888;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      font-size: 12px;
-    }
-    .prospect-url a {
-      color: #888;
-      text-decoration: none;
-    }
-    .prospect-url a:hover { color: #111; text-decoration: underline; }
-    .source-badge {
-      font-size: 10.5px;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 99px;
-      flex-shrink: 0;
-    }
-    .src-crustdata    { background: #eff6ff; color: #2563eb; }
-    .src-linkedin_group { background: #f5f3ff; color: #7c3aed; }
-    .src-ph_streak    { background: #fff7ed; color: #ea580c; }
-    .src-manual       { background: #f8f8f8; color: #888; }
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .sd-discovered { background: #d1d5db; }
-    .sd-queued     { background: #a5b4fc; }
-    .sd-sent       { background: #fbbf24; }
-    .sd-accepted   { background: #4ade80; }
-    .sd-messaged   { background: #f97316; }
-
-    .empty-state {
-      padding: 40px;
-      text-align: center;
-      color: #bbb;
-      font-size: 13px;
-    }
-  </style>
+.col-empty{padding:40px 20px;text-align:center;color:var(--mu);font-size:12px;opacity:.5}
+.close-btn{background:transparent;border:none;color:var(--mu);font-size:24px;cursor:pointer;transition:color .15s}
+.close-btn:hover{color:var(--t)}
+</style>
 </head>
 <body>
 
 <header>
-  <div class="logo">
-    <div class="logo-mark">🪃</div>
-    PH Wingman
-  </div>
-  <div class="header-right">
-    <span id="schedulerBadge" class="scheduler-badge {{ 'badge-active' if scope.scheduler_active else 'badge-inactive' }}">
-      <span class="dot {{ 'dot-green' if scope.scheduler_active else 'dot-gray' }}"></span>
-      {{ 'Scheduler active' if scope.scheduler_active else 'Scheduler idle' }}
+  <div class="logo"><div class="logo-icon">🪃</div>PH Wingman</div>
+  <div class="header-r">
+    <span id="cdPill" style="display:none" class="pill pill-r"></span>
+    <span id="schedBadge" class="pill {{ 'pill-g' if scope.scheduler_active else 'pill-m' }}">
+      <span class="dot {{ 'dg' if scope.scheduler_active else 'dm' }}"></span>
+      {{ 'Active' if scope.scheduler_active else 'Idle' }}
     </span>
-    <a href="/config" class="settings-link">Settings</a>
+    <a href="/config" class="hlink">Settings ⚙</a>
   </div>
 </header>
 
 <div class="page">
 
   <!-- Stats -->
-  <div class="stats-row" id="statsRow">
+  <div class="stats" id="statsRow">
+    {% for label,key,color in [('Total','total','var(--t)'),('Discovered','discovered','var(--mu)'),('Queued','queued','var(--bl)'),('Sent','sent','var(--am)'),('Accepted','accepted','var(--gr)'),('Messaged','messaged','var(--ac)')] %}
     <div class="stat">
-      <div class="stat-label">Total</div>
-      <div class="stat-value" id="st-total">{{ stats.get('total', 0) }}</div>
+      <div class="stat-l">{{label}}</div>
+      <div class="stat-v" id="st-{{key}}" style="color:{{color}}">{{ stats.get(key,0) }}</div>
     </div>
-    <div class="stat">
-      <div class="stat-label">Queued</div>
-      <div class="stat-value" id="st-queued">{{ stats.get('queued', 0) }}</div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">Sent</div>
-      <div class="stat-value" id="st-sent">{{ stats.get('sent', 0) }}</div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">Accepted</div>
-      <div class="stat-value" id="st-accepted">{{ stats.get('accepted', 0) }}</div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">Messaged</div>
-      <div class="stat-value" id="st-messaged">{{ stats.get('messaged', 0) }}</div>
-    </div>
+    {% endfor %}
   </div>
 
-  <!-- Start button -->
-  <div class="start-wrap">
-    <button class="btn-start" id="btnStart" onclick="startScope()" {{ 'disabled' if scope.running else '' }}>
-      {% if scope.running %}
-        <span class="spinner"></span> Running…
-      {% else %}
-        ▶ Start Scoping
-      {% endif %}
+  <!-- Actions -->
+  <div class="actions">
+    <button class="btn btn-p" id="btnStart" onclick="startScope()" {{ 'disabled' if scope.running else '' }}>
+      {% if scope.running %}<span class="spinner"></span> Running…{% else %}▶ Start Scoping{% endif %}
     </button>
     {% if scope.scheduler_active %}
-    <button class="btn-pause" onclick="pauseScheduler()">⏸ Pause Scheduler</button>
+    <button class="btn btn-g" onclick="pauseScheduler()">⏸ Pause Scheduler</button>
     {% endif %}
+    <button class="btn btn-g" onclick="triggerPersonalize()">✍️ Personalize Batch</button>
+    <button class="btn btn-g" onclick="triggerAllocate()">📅 Allocate Schedule</button>
     <span class="run-hint" id="runHint">
-      {% if scope.running %}
-        Pipeline in progress — do not close this tab
-      {% elif scope.scheduler_active %}
-        Scheduler is running outreach in the background
-      {% else %}
-        Discover prospects from all sources, then activate the scheduler
-      {% endif %}
+      {% if scope.running %}Pipeline in progress — do not close this tab
+      {% elif scope.scheduler_active %}Scheduler running autonomously
+      {% else %}Complete the discovery pipeline to start outreach{% endif %}
     </span>
   </div>
 
   <!-- Pipeline -->
-  <div class="section-label">Discovery Pipeline</div>
+  <div class="slabel">Discovery Pipeline</div>
   <div class="pipeline" id="pipeline">
     {% for phase in scope.phases %}
-    <div class="phase-card {{ phase.status }}" id="phase-{{ phase.id }}">
-      <div class="phase-icon">
-        {% if phase.id == 'crustdata' %}🌐
-        {% elif phase.id == 'linkedin' %}👥
-        {% else %}🏆
-        {% endif %}
+    <div class="pc {{ phase.status }}" id="phase-{{ phase.id }}">
+      <div class="pi">
+        {% if phase.id=='linkedin' %}👥
+        {% elif phase.id=='ph' %}🏆
+        {% elif phase.id=='enrich' %}🧬
+        {% elif phase.id=='personalize' %}✍️
+        {% elif phase.id=='schedule' %}📅
+        {% else %}⚙️{% endif %}
       </div>
-      <div class="phase-info">
-        <div class="phase-name">{{ phase.name }}</div>
-        <div class="phase-desc">{{ phase.desc }}</div>
-      </div>
-      <div class="phase-right">
-        <div class="phase-count {{ 'dim' if phase.count == 0 else '' }}" id="count-{{ phase.id }}">
-          {{ phase.count if phase.count > 0 else '—' }}
-        </div>
-        <div class="phase-status-badge status-{{ phase.status }}" id="badge-{{ phase.id }}">
-          {% if phase.status == 'running' %}<span class="spinner" style="border-top-color:#fff;border-color:rgba(0,0,0,.2);border-top-color:#111;"></span>{% endif %}
-          {{ phase.status }}
+      <div class="pname">{{ phase.name }}</div>
+      <div class="pdesc">{{ phase.desc }}</div>
+      <div class="pr">
+        <div class="pcnt {{ 'dim' if not phase.count else '' }}" id="count-{{ phase.id }}">{{ phase.count or '—' }}</div>
+        <div class="pbadge {{ {'idle':'si','running':'sr','done':'sd','error':'se'}.get(phase.status,'si') }}" id="badge-{{ phase.id }}">
+          {% if phase.status=='running' %}<span class="spinner"></span> {% endif %}{{ phase.status }}
         </div>
       </div>
     </div>
@@ -463,182 +197,237 @@
   </div>
 
   <!-- Log -->
-  <div class="log-wrap {{ 'visible' if scope.running or scope.log else '' }}" id="logWrap">
-    <div class="section-label">Live Log</div>
-    <div class="log-console" id="logConsole">
-      {% for entry in scope.log %}
-      <div class="log-line"><span class="log-ts">{{ entry.ts }}</span>{{ entry.msg }}</div>
-      {% endfor %}
+  <div class="log-w {{ 'vis' if scope.running or scope.log else '' }}" id="logWrap">
+    <div class="slabel">Live Activity</div>
+    <div class="log-c" id="logC">
+      {% for e in scope.log %}<div class="ll"><span class="lt">{{ e.ts }}</span><span class="lm">{{ e.msg }}</span></div>{% endfor %}
     </div>
   </div>
 
-  <!-- Prospects -->
-  <div class="prospects-header">
-    <div class="section-label" style="margin-bottom:0">Prospects</div>
-    <div class="prospect-count" id="prospectCount"></div>
-  </div>
-  <div class="prospects-table" id="prospectsTable">
-    <div class="empty-state" id="emptyState">
-      No prospects yet — run the scoping pipeline to discover founders &amp; makers.
+  <!-- Kanban -->
+  <div class="slabel">Outreach Kanban</div>
+  <div class="kanban" id="kanban">
+    {% for status, icon, label in [
+      ('discovered','🔍','Discovered'),
+      ('queued','📋','Queued'),
+      ('sent','📤','Sent'),
+      ('accepted','🤝','Accepted'),
+      ('messaged','💬','Messaged'),
+    ] %}
+    <div class="col" id="col-{{ status }}">
+      <div class="col-head">
+        <div class="col-title"><span>{{ icon }}</span> {{ label }}</div>
+        <span class="col-cnt" id="colcnt-{{ status }}">0</span>
+      </div>
+      <div class="col-body" id="colbody-{{ status }}">
+        <div class="col-empty">—</div>
+      </div>
     </div>
+    {% endfor %}
   </div>
 
 </div>
 
+<!-- Detail Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target==this)closeModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="mName">Prospect Details</div>
+      <button class="close-btn" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="genome">
+        <div class="genome-section">
+          <div class="genome-label">Headline & Company</div>
+          <div class="genome-val" id="mHeadline">—</div>
+        </div>
+        <div class="genome-section">
+          <div class="genome-label">Location</div>
+          <div class="genome-val" id="mLocation">—</div>
+        </div>
+        <div class="genome-section">
+          <div class="genome-label">Product Hunt Streak</div>
+          <div class="genome-val" id="mStreak">0 days</div>
+        </div>
+        <div class="genome-section">
+          <div class="genome-label">Skills</div>
+          <div class="tag-list" id="mSkills"></div>
+        </div>
+        <div class="genome-section">
+          <div class="genome-label">LinkedIn Activity</div>
+          <div class="genome-val" id="mPost" style="font-style:italic; font-size:12px; color:var(--mu)">—</div>
+        </div>
+      </div>
+      <div class="msg-editor">
+        <div class="genome-label">Outreach Message</div>
+        <textarea class="msg-textarea" id="mMsg" placeholder="AI generating message..."></textarea>
+        <div style="font-size:11px; color:var(--mu)">
+          Markdown-ready. These placeholders will be swapped: <code style="color:var(--ac)">{first_name}</code>, <code style="color:var(--ac)">{launch_url}</code>.
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-g" onclick="closeModal()">Close</button>
+      <button class="btn btn-p" id="mSaveBtn" onclick="saveProspect()">Save & Queue</button>
+    </div>
+  </div>
+</div>
+
 <script>
-  let _running = {{ 'true' if scope.running else 'false' }};
-  let _pollTimer = null;
+let _running = {{ 'true' if scope.running else 'false' }};
+let _pollTimer = null;
+let _prospects = [];
+let _curProspect = null;
 
-  const SOURCE_CLASS = {
-    crustdata: 'src-crustdata',
-    linkedin_group: 'src-linkedin_group',
-    ph_streak: 'src-ph_streak',
-  };
-  const STATUS_CLASS = {
-    discovered: 'sd-discovered',
-    queued: 'sd-queued',
-    sent: 'sd-sent',
-    accepted: 'sd-accepted',
-    messaged: 'sd-messaged',
-  };
+const SRC = {linkedin_group:'src-linkedin_group',ph_streak:'src-ph_streak',manual:'src-manual'};
+const SRC_LABEL = {linkedin_group:'Group',ph_streak:'Streak',manual:'Manual'};
 
-  async function startScope() {
-    const btn = document.getElementById('btnStart');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Starting…';
-    try {
-      const r = await fetch('/api/scope/start', { method: 'POST' });
-      const d = await r.json();
-      if (d.error) { alert(d.error); btn.disabled = false; btn.textContent = '▶ Start Scoping'; return; }
-      _running = true;
-      schedulePoll();
-    } catch(e) {
-      alert('Error: ' + e.message);
-      btn.disabled = false;
-      btn.innerHTML = '▶ Start Scoping';
-    }
+async function countdown() {
+  try {
+    const d = await (await fetch('/api/status')).json();
+    if (!d.launch_date) return;
+    const diff = Math.ceil((new Date(d.launch_date) - new Date()) / 86400000);
+    const p = document.getElementById('cdPill');
+    p.style.display = '';
+    p.textContent = diff > 0 ? `D-${diff} to launch` : diff === 0 ? '🚀 Launch Day!' : `D+${Math.abs(diff)}`;
+  } catch(e) {}
+}
+countdown();
+
+async function startScope() {
+  const btn = document.getElementById('btnStart');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Starting…';
+  try {
+    const d = await (await fetch('/api/scope/start',{method:'POST'})).json();
+    if (d.error) { alert(d.error); btn.disabled=false; btn.textContent='▶ Start Scoping'; return; }
+    _running = true; poll();
+  } catch(e) { alert(e.message); btn.disabled=false; btn.textContent='▶ Start Scoping'; }
+}
+
+async function pauseScheduler() { await fetch('/api/scheduler/pause',{method:'POST'}); location.reload(); }
+async function triggerPersonalize() { await fetch('/api/pipeline/personalize',{method:'POST'}); }
+async function triggerAllocate() { await fetch('/api/pipeline/allocate',{method:'POST'}); }
+
+function schedulePoll() { clearTimeout(_pollTimer); _pollTimer = setTimeout(poll, _running ? 1800 : 8000); }
+
+async function poll() {
+  try {
+    const [sd, pd] = await Promise.all([
+      fetch('/api/scope/status').then(r=>r.json()),
+      fetch('/api/prospects/list?limit=5000').then(r=>r.json()),
+    ]);
+    applyStatus(sd);
+    _running = sd.running;
+    _prospects = pd.prospects || [];
+    renderKanban(_prospects);
+  } catch(e) {}
+  schedulePoll();
+}
+
+function applyStatus(d) {
+  const s = d.stats || {};
+  for (const k of ['total','discovered','queued','sent','accepted','messaged']) {
+    const el = document.getElementById('st-'+k); if (el) el.textContent = s[k] || 0;
   }
-
-  async function pauseScheduler() {
-    await fetch('/api/scheduler/pause', { method: 'POST' });
-    window.location.reload();
+  (d.phases||[]).forEach(p => {
+    const card = document.getElementById('phase-'+p.id); if (!card) return;
+    card.className = 'pc '+p.status;
+    const cnt = document.getElementById('count-'+p.id); cnt.className = 'pcnt'+(p.count?'':' dim'); cnt.textContent = p.count || '—';
+    const badge = document.getElementById('badge-'+p.id); badge.className = 'pbadge '+({idle:'si',running:'sr',done:'sd',error:'se'}[p.status]||'si');
+    badge.innerHTML = (p.status==='running'?'<span class="spinner"></span> ':'')+p.status;
+  });
+  const btn = document.getElementById('btnStart');
+  if (d.running) { btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Running…'; }
+  else { btn.disabled=false; btn.innerHTML='▶ Start Scoping'; }
+  const sb = document.getElementById('schedBadge'); sb.className='pill '+(d.scheduler_active?'pill-g':'pill-m');
+  sb.innerHTML=`<span class="dot ${d.scheduler_active?'dg':'dm'}"></span>${d.scheduler_active?'Active':'Idle'}`;
+  const logW = document.getElementById('logWrap'); const logC = document.getElementById('logC');
+  if (d.log?.length || d.running) {
+    logW.classList.add('vis');
+    logC.innerHTML = (d.log||[]).map(l=>{
+      const cls = l.msg.startsWith('✓')||l.msg.startsWith('+') ? 'ok' : l.msg.startsWith('✗') ? 'er' : '';
+      return `<div class="ll"><span class="lt">${l.ts}</span><span class="lm ${cls}">${x(l.msg)}</span></div>`;
+    }).join('');
+    logC.scrollTop = logC.scrollHeight;
   }
+}
 
-  function schedulePoll() {
-    clearTimeout(_pollTimer);
-    _pollTimer = setTimeout(poll, _running ? 1500 : 5000);
-  }
+function renderKanban(list) {
+  const STAGES = ['discovered','queued','sent','accepted','messaged'];
+  const groups = {}; STAGES.forEach(s => groups[s] = []);
+  list.forEach(p => { 
+    let s = p.status; 
+    if (s==='sending') s='sent'; if (s==='messaging') s='messaged';
+    if (groups[s]) groups[s].push(p); 
+  });
 
-  async function poll() {
-    try {
-      const r = await fetch('/api/scope/status');
-      const d = await r.json();
-      applyStatus(d);
-      _running = d.running;
-
-      const pr = await fetch('/api/prospects/list?limit=50');
-      const pd = await pr.json();
-      renderProspects(pd.prospects || []);
-    } catch(e) {}
-    schedulePoll();
-  }
-
-  function applyStatus(d) {
-    // stats
-    const s = d.stats || {};
-    setText('st-total',    s.total    || 0);
-    setText('st-queued',   s.queued   || 0);
-    setText('st-sent',     s.sent     || 0);
-    setText('st-accepted', s.accepted || 0);
-    setText('st-messaged', s.messaged || 0);
-
-    // phases
-    (d.phases || []).forEach(p => {
-      const card  = document.getElementById('phase-' + p.id);
-      const count = document.getElementById('count-' + p.id);
-      const badge = document.getElementById('badge-' + p.id);
-      if (!card) return;
-
-      card.className = 'phase-card ' + p.status;
-      count.className = 'phase-count' + (p.count ? '' : ' dim');
-      count.textContent = p.count || '—';
-
-      badge.className = 'phase-status-badge status-' + p.status;
-      badge.innerHTML = (p.status === 'running'
-        ? '<span class="spinner" style="border-color:rgba(0,0,0,.15);border-top-color:#111;"></span> '
-        : '') + p.status;
-    });
-
-    // button
-    const btn = document.getElementById('btnStart');
-    const hint = document.getElementById('runHint');
-    if (d.running) {
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner" style="border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> Running…';
-      hint.textContent = 'Pipeline in progress — do not close this tab';
-    } else {
-      btn.disabled = false;
-      btn.innerHTML = '▶ Start Scoping';
-      hint.textContent = d.scheduler_active
-        ? 'Scheduler is running outreach in the background'
-        : 'Discover prospects from all sources, then activate the scheduler';
-    }
-
-    // scheduler badge
-    const sbadge = document.getElementById('schedulerBadge');
-    sbadge.className = 'scheduler-badge ' + (d.scheduler_active ? 'badge-active' : 'badge-inactive');
-    sbadge.innerHTML = `<span class="dot ${d.scheduler_active ? 'dot-green' : 'dot-gray'}"></span>${d.scheduler_active ? 'Scheduler active' : 'Scheduler idle'}`;
-
-    // log
-    const logWrap = document.getElementById('logWrap');
-    const logConsole = document.getElementById('logConsole');
-    const logs = d.log || [];
-    if (logs.length > 0 || d.running) {
-      logWrap.classList.add('visible');
-      logConsole.innerHTML = logs.map(l =>
-        `<div class="log-line"><span class="log-ts">${l.ts}</span>${escHtml(l.msg)}</div>`
-      ).join('');
-      logConsole.scrollTop = logConsole.scrollHeight;
-    }
-  }
-
-  function renderProspects(list) {
-    const table = document.getElementById('prospectsTable');
-    const empty = document.getElementById('emptyState');
-    const count = document.getElementById('prospectCount');
-
-    if (!list.length) {
-      table.innerHTML = '<div class="empty-state" id="emptyState">No prospects yet — run the scoping pipeline to discover founders &amp; makers.</div>';
-      count.textContent = '';
-      return;
-    }
-
-    count.textContent = list.length + ' prospects';
-    table.innerHTML = list.map(p => {
-      const srcCls = SOURCE_CLASS[p.source] || 'src-manual';
-      const sdCls  = STATUS_CLASS[p.status] || 'sd-discovered';
-      const name   = escHtml(p.display_name || p.ph_username || '—');
-      const url    = p.linkedin_url || '';
-      const src    = (p.source || 'manual').replace('_', ' ');
-      return `<div class="prospect-row">
-        <span class="status-dot ${sdCls}" title="${escHtml(p.status)}"></span>
-        <span class="prospect-name">${name}</span>
-        <span class="prospect-url">${url ? `<a href="${escHtml(url)}" target="_blank" rel="noopener">${escHtml(url)}</a>` : '—'}</span>
-        <span class="source-badge ${srcCls}">${escHtml(src)}</span>
+  STAGES.forEach(status => {
+    const col = groups[status];
+    document.getElementById('colcnt-'+status).textContent = col.length;
+    const body = document.getElementById('colbody-'+status);
+    if (!col.length) { body.innerHTML='<div class="col-empty">—</div>'; return; }
+    body.innerHTML = col.map(p => {
+      const name = x(p.display_name || p.ph_username || p.linkedin_url.split('/').pop() || '—');
+      const srcCls = SRC[p.source]||'src-manual';
+      const streak = p.ph_streak_days > 0 ? `<span class="streak">🔥${p.ph_streak_days}</span>` : '';
+      return `<div class="kcard" onclick="openProspect(${p.id})">
+        <div class="kcard-name">${name}</div>
+        <div class="kcard-meta">
+          <span class="kbadge ${srcCls}">${SRC_LABEL[p.source]||'Manual'}</span>
+          ${streak}
+          <span class="kcard-ts">${statusTs(p)}</span>
+        </div>
       </div>`;
     }).join('');
-  }
+  });
+}
 
-  function setText(id, val) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = val;
-  }
-  function escHtml(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
+async function openProspect(id) {
+  const p = _prospects.find(x => x.id === id);
+  if (!p) return;
+  _curProspect = p;
+  document.getElementById('mName').textContent = p.display_name || p.ph_username || 'Prospect Details';
+  document.getElementById('mHeadline').textContent = p.headline || (p.company ? 'at ' + p.company : '—');
+  document.getElementById('mLocation').textContent = p.location || '—';
+  document.getElementById('mStreak').textContent = (p.ph_streak_days || 0) + ' days';
+  document.getElementById('mSkills').innerHTML = (p.skills || '').split(',').filter(s=>s.trim()).map(s=>`<span class="tag">${x(s)}</span>`).join('') || '<div class="genome-val dim">None extracted</div>';
+  document.getElementById('mPost').textContent = p.post_snippet ? `"${p.post_snippet}"` : 'No recent activity found.';
+  document.getElementById('mMsg').value = p.outreach_message || '';
+  document.getElementById('mSaveBtn').textContent = p.status === 'discovered' ? 'Save & Queue' : 'Save Changes';
+  document.getElementById('modalOverlay').classList.add('vis');
+}
 
-  // kick off
-  poll();
+function closeModal() { document.getElementById('modalOverlay').classList.remove('vis'); _curProspect = null; }
+
+async function saveProspect() {
+  if (!_curProspect) return;
+  const msg = document.getElementById('mMsg').value;
+  const data = { outreach_message: msg };
+  if (_curProspect.status === 'discovered') data.status = 'queued';
+  
+  const btn = document.getElementById('mSaveBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  try {
+    await fetch(`/api/prospects/${_curProspect.id}/update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    closeModal();
+    poll();
+  } catch(e) { alert('Save failed: ' + e.message); btn.disabled = false; btn.textContent = 'Retry'; }
+}
+
+function statusTs(p) {
+  if (p.sent_at) return '📤 ' + fmt(p.sent_at);
+  if (p.accepted_at) return '🤝 ' + fmt(p.accepted_at);
+  if (p.messaged_at) return '💬 ' + fmt(p.messaged_at);
+  if (p.scheduled_date) return '📅 ' + p.scheduled_date;
+  return '';
+}
+function fmt(iso) { try { return new Date(iso).toLocaleDateString('en-GB',{day:'numeric',month:'short'}); } catch(e) { return ''; } }
+function x(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+poll();
 </script>
 </body>
 </html>

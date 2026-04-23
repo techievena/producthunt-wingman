@@ -334,6 +334,73 @@ Return "SUCCESS" if the message was sent, or describe any issue.
             rprint(f"[red]  ❌ get_joined_groups error: {e}[/red]")
             return []
 
+    async def enrich_profile(self, linkedin_url: str) -> dict:
+        """
+        Visit a LinkedIn profile and extract rich 'Genome' data:
+        headline, company, location, skills, and most recent post snippet.
+        """
+        rprint(f"[blue]🧬 Enriching profile:[/blue] {linkedin_url}")
+        if not await self.ensure_logged_in():
+            return {}
+
+        page = await self._session.get_current_page()
+        await page.goto(linkedin_url)
+        await asyncio.sleep(random.uniform(4, 7))
+
+        # Scroll a bit to trigger lazy loading of some sections
+        await page.evaluate("window.scrollBy(0, 500)")
+        await asyncio.sleep(1)
+
+        # Extraction logic via JS to be fast and deterministic
+        raw = await page.evaluate("""() => {
+            const getT = (sel) => document.querySelector(sel)?.textContent?.trim() || "";
+            
+            // Basic Info
+            const name = getT('h1.text-heading-xlarge');
+            const headline = getT('.text-body-medium.break-words');
+            const location = getT('.text-body-small.inline.t-black--light.break-words');
+            
+            // Company (usually in the experience section or top card)
+            const companyEl = document.querySelector('.inline-flex.align-items-center.t-14.t-black.t-bold span') 
+                           || document.querySelector('.pv-text-details__right-panel-item-link');
+            const company = companyEl?.textContent?.trim() || "";
+
+            // Skills (requires finding the skills section - often hidden or requires a click, 
+            // but we can try to grab visible ones)
+            const skillEls = document.querySelectorAll('.pv-skill-categories-section__top-skills-list-itemText, .display-flex.align-items-center.mr1.hoverable-link-text');
+            const skills = Array.from(skillEls).map(el => el.textContent.trim()).filter(t => t && t.length < 30);
+
+            return { name, headline, location, company, skills: [...new Set(skills)] };
+        }""")
+
+        # Extract last post snippet
+        # This is trickier as it often requires navigating to /recent-activity/all/
+        # But we can try to grab it if visible on the main page 'Activity' section
+        try:
+            post_task = """
+Find the "Activity" section on the current page. 
+If there is a recent post, extract the first 300 characters of its text.
+If no activity is visible, return "NONE".
+Return the extracted text.
+"""
+            post_snippet = await self._run_agent(post_task, max_steps=5)
+            if "NONE" in post_snippet.upper() or len(post_snippet) < 10:
+                post_snippet = ""
+        except Exception:
+            post_snippet = ""
+
+        result = {
+            "display_name": raw.get("name"),
+            "headline":     raw.get("headline"),
+            "location":     raw.get("location"),
+            "company":      raw.get("company"),
+            "skills":       ", ".join(raw.get("skills", [])),
+            "post_snippet": post_snippet.strip(),
+        }
+        rprint(f"[green]  ✅ Enrichment complete for {raw.get('name') or linkedin_url}[/green]")
+        return result
+
+
     async def scrape_group_members(self, group_url: str) -> list[str]:
         """Scrape member profile URLs from a LinkedIn group. Returns list of URLs."""
         rprint(f"[blue]👥 Scraping group members:[/blue] {group_url}")

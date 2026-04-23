@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS prospects (
     location        TEXT,
     company         TEXT,
     ph_streak_days  INTEGER DEFAULT 0,
-    enrichment_data TEXT,           -- JSON blob from Crustdata /person/enrich
+    enrichment_data TEXT,           -- JSON blob (reserved for future enrichment)
     skills          TEXT,           -- comma-separated skills from enrichment
     post_snippet    TEXT,           -- most recent LinkedIn post text (from enrichment)
     outreach_message TEXT,          -- final personalised DM text
@@ -113,7 +113,6 @@ async def init_db():
         "ph_launch_url":           config.PH_LAUNCH_URL,
         "scheduler_running":       "false",
         "scanner_running":         "false",
-        "credits_used":            "0",
     }
     for key, value in defaults.items():
         await upsert_config(key, value, skip_if_exists=True)

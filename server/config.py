@@ -4,6 +4,7 @@ Loads from .env file with sensible defaults.
 """
 import os
 from pathlib import Path
+from typing import Optional
 from dotenv import load_dotenv
 
 # Load .env from server directory
@@ -18,12 +19,10 @@ else:
 class Config:
     """Central configuration singleton."""
 
-    # Crustdata
-    CRUSTDATA_API_KEY: str = os.getenv("CRUSTDATA_API_KEY", "")
-
     # LLM
-    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
-    ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
+    OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
+    ANTHROPIC_API_KEY: Optional[str] = os.getenv("ANTHROPIC_API_KEY")
+    GOOGLE_API_KEY: Optional[str] = os.getenv("GOOGLE_API_KEY")
 
     # ProductHunt
     PRODUCTHUNT_API_TOKEN: str = os.getenv("PRODUCTHUNT_API_TOKEN", "")

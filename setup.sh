@@ -17,7 +17,6 @@ if [ ! -f ".env" ]; then
     cp .env.example .env
     echo ""
     echo "Created server/.env — fill in your API keys before running:"
-    echo "  CRUSTDATA_API_KEY"
     echo "  OPENAI_API_KEY (or ANTHROPIC_API_KEY)"
     echo "  LAUNCH_DATE"
     echo "  PH_LAUNCH_URL"

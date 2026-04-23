@@ -283,98 +283,48 @@ async def run_dm_sender():
         await asyncio.sleep(delay)
 
 
-async def run_crustdata_discovery_job():
+
+async def run_personalize_and_schedule_job():
     """
-    Discover PH community prospects via Crustdata person search.
-    Uses 6 targeted filter sets — POSTED_ON_LINKEDIN, RECENTLY_CHANGED_JOBS,
-    KEYWORD "Product Hunt", IN_THE_NEWS — all confirmed working against live API.
-    Runs every 6 hours. Costs ~3-5 Crustdata credits per run.
-    """
-    running = await db.get_config("scheduler_running")
-    if running != "true":
-        return
-
-    import crustdata
-
-    rprint("[bold cyan]🚀 Crustdata discovery job starting...[/bold cyan]")
-    try:
-        profiles = await crustdata.discover_all_ph_prospects()
-        if not profiles:
-            rprint("[dim]Crustdata discovery: no profiles returned.[/dim]")
-            return
-
-        added = 0
-        for profile in profiles:
-            fields = crustdata.extract_discovery_profile_fields(profile)
-            linkedin_url = fields.get("linkedin_url", "")
-            if not linkedin_url or "linkedin.com" not in linkedin_url:
-                continue
-
-            source = fields.get("source", "crustdata_search")
-            # "PH profile mention" people are highest signal — they literally mention PH
-            priority = 75 if "Product Hunt" in source else \
-                       65 if "Indie" in source or "Maker" in source else 50
-
-            await db.upsert_prospect({
-                **fields,
-                "status":   "discovered",
-                "priority": priority,
-            })
-            added += 1
-
-        await db.log_action("crustdata_discovery", detail=f"{len(profiles)} profiles → {added} ingested")
-        rprint(f"[bold green]✅ Crustdata discovery: {added} new prospects ingested[/bold green]")
-    except Exception as e:
-        rprint(f"[red]❌ Crustdata discovery job failed: {e}[/red]")
-        await db.log_action("crustdata_discovery", "error", detail=str(e))
-
-
-async def run_enrichment_job():
-    """
-    Pick up to 20 'discovered' prospects without enrichment data,
-    enrich via Crustdata (gets headline, company, skills, post snippet),
-    generate personalised messages using all that context, then schedule them.
-    Called every 10 minutes.
+    Pick up 'discovered' prospects that have no outreach message yet,
+    generate personalized messages via LLM, then allocate them to the
+    send schedule. Runs every 30 minutes.
     """
     running = await db.get_config("scheduler_running")
     if running != "true":
         return
 
-    import crustdata
     import personalizer
+    all_prospects = await db.get_all_prospects(limit=10000)
 
-    discovered = [
-        p for p in await db.get_all_prospects(limit=500)
-        if p["status"] == "discovered" and not p.get("enrichment_data")
+    # 1. Enrich
+    to_enrich = [
+        p for p in all_prospects
+        if p["status"] == "discovered" and not p.get("headline")
     ]
+    if to_enrich:
+        rprint(f"[blue]🧬 Auto-enriching {len(to_enrich)} prospects...[/blue]")
+        for p in to_enrich:
+            try:
+                data = await _agent.enrich_profile(p["linkedin_url"])
+                if data:
+                    await db.upsert_prospect({**p, **data})
+            except Exception:
+                pass
 
-    if not discovered:
-        return
-
-    batch = discovered[:20]
-    rprint(f"[blue]🔬 Enriching {len(batch)} prospects via Crustdata...[/blue]")
-
-    urls = [p["linkedin_url"] for p in batch]
-    enriched_persons = await crustdata.enrich_person_batch(urls)
-
-    for person_data in enriched_persons:
-        fields = crustdata.extract_profile_fields(person_data)
-        linkedin_url = fields.get("linkedin_url")
-        if not linkedin_url:
-            continue
-        # Preserve existing source and priority — only update enrichment fields
-        await db.upsert_prospect({**fields, "status": "discovered"})
-
-    # Generate personalised messages for all enriched prospects without a message
-    enriched_prospects = [
-        p for p in await db.get_all_prospects(limit=500)
-        if p["status"] == "discovered" and p.get("enrichment_data") and not p.get("outreach_message")
+    # 2. Personalize
+    unpersonalized = [
+        p for p in all_prospects
+        if p["status"] == "discovered" and not p.get("outreach_message")
     ]
+    if unpersonalized:
+        rprint(f"[blue]✍️ Auto-personalizing {len(unpersonalized)} prospects...[/blue]")
+        await personalizer.personalize_batch(unpersonalized)
 
-    if enriched_prospects:
-        await personalizer.personalize_batch(enriched_prospects[:50])
-
+    # 3. Schedule
     await allocate_schedule()
+
+
 
 
 async def run_group_scraper_job():
@@ -452,32 +402,23 @@ def init_scheduler(agent: LinkedInAgent) -> AsyncIOScheduler:
         coalesce=True,
     )
 
-    # Enrichment job: every 10 minutes
-    _scheduler.add_job(
-        run_enrichment_job,
-        IntervalTrigger(minutes=10, jitter=60),
-        id="enrichment",
-        name="Enrich Prospects",
-        max_instances=1,
-        coalesce=True,
-    )
 
-    # Crustdata discovery: every 6 hours (PH post engagers + keyword posts + person search)
-    _scheduler.add_job(
-        run_crustdata_discovery_job,
-        IntervalTrigger(hours=6, jitter=1800),
-        id="crustdata_discovery",
-        name="Crustdata PH Community Discovery",
-        max_instances=1,
-        coalesce=True,
-    )
-
-    # LinkedIn group scraper: every 6 hours (offset so they don't collide)
+    # LinkedIn group scraper: every 6 hours
     _scheduler.add_job(
         run_group_scraper_job,
         IntervalTrigger(hours=6, jitter=1800),
         id="group_scraper",
         name="Scrape LinkedIn Groups",
+        max_instances=1,
+        coalesce=True,
+    )
+
+    # Personalize + schedule: every 30 minutes (catches any newly discovered prospects)
+    _scheduler.add_job(
+        run_personalize_and_schedule_job,
+        IntervalTrigger(minutes=30, jitter=120),
+        id="personalize_schedule",
+        name="Personalize & Schedule",
         max_instances=1,
         coalesce=True,
     )
