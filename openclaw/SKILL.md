@@ -1,8 +1,8 @@
 ---
-name: "ph wingman"
-slug: "ph-wingman"
-version: "1.3.0"
-description: "AI-native ProductHunt outreach agent — automates community discovery and LinkedIn engagement."
+name: "producthunt-wingman"
+slug: "producthunt-wingman"
+version: "1.4.0"
+description: "Premium PH outreach agent — automates community discovery, enrichment, and LinkedIn engagement."
 tags: ["producthunt", "outreach", "linkedin", "marketing", "automation"]
 author: "techievena"
 homepage: "https://producthunt.eonik.ai"
@@ -16,7 +16,7 @@ metadata:
 
 # ProductHunt Wingman: Autonomous Community Outreach
 
-AI-native ProductHunt outreach agent. Automates community discovery from LinkedIn groups and PH streaks, hyper-personalizes DMs via LLM, and manages the entire outreach lifecycle on LinkedIn.
+Premium ProductHunt outreach agent. Automates the full lifecycle: community discovery, deep profile enrichment, hyper-personalized DMs (GPT-4/Claude/Gemini), and a premium Kanban-based Mission Control.
 
 ---
 

@@ -1,7 +1,7 @@
 {
-  "name": "ph-wingman",
-  "version": "1.3.0",
-  "description": "AI-native ProductHunt outreach agent — automates community discovery, enrichment, and LinkedIn engagement.",
+  "name": "producthunt-wingman",
+  "version": "1.4.0",
+  "description": "Premium PH outreach agent with deep profile enrichment, LLM personalization (GPT-4/Claude/Gemini), and live Kanban monitoring.",
   "author": "techievena",
   "license": "MIT",
   "source": "https://github.com/techievena/producthunt-wingman",
@@ -19,6 +19,7 @@
     "Scrape ProductHunt streaks",
     "How many connections did wingman send today?",
     "Check my launch outreach status",
+    "Enrich new prospects",
     "Pause wingman",
     "cron"
   ],
