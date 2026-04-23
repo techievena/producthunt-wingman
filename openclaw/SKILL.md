@@ -1,7 +1,7 @@
 ---
 name: "producthunt-wingman"
-slug: "producthunt-wingman"
-version: "1.6.0"
+slug: "ph-wingman"
+version: "1.6.1"
 description: "Premium PH outreach agent — automates community discovery, enrichment, and LinkedIn engagement locally."
 tags: ["producthunt", "outreach", "linkedin", "marketing", "automation"]
 author: "techievena"
