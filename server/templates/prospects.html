@@ -155,9 +155,9 @@
   <!-- Pagination -->
   {% if page > 1 or has_more %}
   <div class="pagination">
-    {% if page > 1 %}<a href="/prospects?status={{ current_status }}&page={{ page-1 }}" class="pag-btn">← Prev</a>{% endif %}
+    {% if page > 1 %}<a href="/prospects?{% if current_status %}status={{ current_status }}&amp;{% endif %}page={{ page-1 }}" class="pag-btn">← Prev</a>{% endif %}
     <span style="padding:6px 14px;font-size:12px;color:var(--muted)">Page {{ page }}</span>
-    {% if has_more %}<a href="/prospects?status={{ current_status }}&page={{ page+1 }}" class="pag-btn">Next →</a>{% endif %}
+    {% if has_more %}<a href="/prospects?{% if current_status %}status={{ current_status }}&amp;{% endif %}page={{ page+1 }}" class="pag-btn">Next →</a>{% endif %}
   </div>
   {% endif %}
 </main>

@@ -94,7 +94,10 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 3
 
 .kcard{background:var(--bg);border:1px solid var(--b);border-radius:10px;padding:14px;margin-bottom:10px;cursor:pointer;transition:all .15s}
 .kcard:hover{border-color:#4a4a6a;transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.2)}
-.kcard-name{font-size:13px;font-weight:600;color:var(--t);margin-bottom:6px}
+.kcard-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.kcard-name{font-size:13px;font-weight:600;color:var(--t);flex:1;min-width:0;line-height:1.35}
+.li-open{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 8px;border-radius:8px;background:rgba(10,102,194,.18);color:#93c5fd;font-size:11px;font-weight:800;text-decoration:none;letter-spacing:-0.3px;border:1px solid rgba(10,102,194,.35);flex-shrink:0;line-height:1}
+.li-open:hover{background:rgba(10,102,194,.35);color:#fff;border-color:rgba(10,102,194,.55)}
 .kcard-meta{font-size:11px;color:var(--mu);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .kbadge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px}
 .src-linkedin_group{background:rgba(168,85,247,.15);color:var(--pu)}
@@ -138,6 +141,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 3
       <span class="dot {{ 'dg' if scope.scheduler_active else 'dm' }}"></span>
       {{ 'Active' if scope.scheduler_active else 'Idle' }}
     </span>
+    <a href="/prospects" class="hlink">Prospects 👥</a>
     <a href="/config" class="hlink">Settings ⚙</a>
   </div>
 </header>
@@ -164,6 +168,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 3
     {% endif %}
     <button class="btn btn-g" onclick="triggerPersonalize()">✍️ Personalize Batch</button>
     <button class="btn btn-g" onclick="triggerAllocate()">📅 Allocate Schedule</button>
+    <button class="btn btn-g" onclick="sendConnectionsNow()" title="Sends up to 5 connection requests now (respects daily budget; pulls forward scheduled queue)">🔗 Send connections (5)</button>
     <span class="run-hint" id="runHint">
       {% if scope.running %}Pipeline in progress — do not close this tab
       {% elif scope.scheduler_active %}Scheduler running autonomously
@@ -308,6 +313,15 @@ async function pauseScheduler() { await fetch('/api/scheduler/pause',{method:'PO
 async function triggerPersonalize() { await fetch('/api/pipeline/personalize',{method:'POST'}); }
 async function triggerAllocate() { await fetch('/api/pipeline/allocate',{method:'POST'}); }
 
+async function sendConnectionsNow() {
+  if (!confirm('Send up to 5 LinkedIn connection requests now? Uses your daily budget and spacing delays; keep the Wingman server terminal visible for browser progress.')) return;
+  try {
+    const d = await (await fetch('/api/pipeline/send-connections?limit=5&pull_forward=true', { method: 'POST' })).json();
+    if (d.status === 'started') alert('Queued. Watch the server terminal where python main.py is running.');
+    else alert(JSON.stringify(d));
+  } catch (e) { alert(e.message); }
+}
+
 function schedulePoll() { clearTimeout(_pollTimer); _pollTimer = setTimeout(poll, _running ? 1800 : 8000); }
 
 async function poll() {
@@ -352,6 +366,19 @@ function applyStatus(d) {
   }
 }
 
+const LI_CONNECTED = new Set(['accepted','messaging','messaged','replied']);
+
+function safeLinkedInHref(u) {
+  if (!u || typeof u !== 'string') return '';
+  const t = u.trim();
+  if (!/^https:\/\/(www\.)?linkedin\.com\//i.test(t)) return '';
+  return t;
+}
+
+function escapeAttr(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
 function renderKanban(list) {
   const STAGES = ['discovered','queued','sent','accepted','messaged'];
   const groups = {}; STAGES.forEach(s => groups[s] = []);
@@ -368,10 +395,17 @@ function renderKanban(list) {
     if (!col.length) { body.innerHTML='<div class="col-empty">—</div>'; return; }
     body.innerHTML = col.map(p => {
       const name = x(p.display_name || p.ph_username || p.linkedin_url.split('/').pop() || '—');
+      const liHref = safeLinkedInHref(p.linkedin_url);
+      const showLiOpen = liHref && !LI_CONNECTED.has(p.status);
+      const liBtn = showLiOpen
+        ? `<a href="${escapeAttr(liHref)}" target="_blank" rel="noopener noreferrer" class="li-open" onclick="event.stopPropagation()" title="Open LinkedIn profile">in</a>`
+        : '';
       const srcCls = SRC[p.source]||'src-manual';
       const streak = p.ph_streak_days > 0 ? `<span class="streak">🔥${p.ph_streak_days}</span>` : '';
       return `<div class="kcard" onclick="openProspect(${p.id})">
-        <div class="kcard-name">${name}</div>
+        <div class="kcard-head">
+          <div class="kcard-name">${name}</div>${liBtn}
+        </div>
         <div class="kcard-meta">
           <span class="kbadge ${srcCls}">${SRC_LABEL[p.source]||'Manual'}</span>
           ${streak}

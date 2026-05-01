@@ -4,10 +4,12 @@ Clean single-page UI: scope → discover → outreach.
 """
 import re
 import asyncio
+import aiosqlite
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
-from fastapi import FastAPI, Request, BackgroundTasks, Form
+from fastapi import FastAPI, Request, BackgroundTasks, Form, Query, Body
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -210,6 +212,34 @@ async def index(request: Request):
     })
 
 
+PROSPECTS_PAGE_SIZE = 50
+
+
+@app.get("/prospects", response_class=HTMLResponse)
+async def prospects_page(
+    request: Request,
+    status: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+):
+    """Paginated prospects table (linked from Settings / nav)."""
+    stats = await db.get_pipeline_stats()
+    offset = (page - 1) * PROSPECTS_PAGE_SIZE
+    rows = await db.get_all_prospects(
+        status=status,
+        limit=PROSPECTS_PAGE_SIZE + 1,
+        offset=offset,
+    )
+    has_more = len(rows) > PROSPECTS_PAGE_SIZE
+    prospects = rows[:PROSPECTS_PAGE_SIZE]
+    return templates.TemplateResponse(request, "prospects.html", {
+        "stats": stats,
+        "prospects": prospects,
+        "current_status": status or "",
+        "page": page,
+        "has_more": has_more,
+    })
+
+
 @app.post("/api/scope/start")
 async def start_scope(background_tasks: BackgroundTasks):
     if _scope["running"]:
@@ -303,6 +333,44 @@ async def api_allocate():
     from scheduler import allocate_schedule
     count = await allocate_schedule()
     return {"status": "ok", "scheduled": count}
+
+
+@app.post("/api/pipeline/send-connections")
+async def api_send_connections(
+    background_tasks: BackgroundTasks,
+    limit: int = Query(5, ge=1, le=50),
+    pull_forward: bool = Query(
+        True,
+        description="If true, send the next people in the queue even before their scheduled_date. If false, only those due today or earlier.",
+    ),
+):
+    """
+    Queue a batch of LinkedIn connection requests. Runs in the background; watch
+    the server terminal for browser-use progress. Requires main.py with a
+    working LinkedIn agent (browser window).
+    """
+    due_today_only = not pull_forward
+
+    async def _run_sends() -> None:
+        from scheduler import send_connections_now
+
+        await send_connections_now(limit, due_today_only=due_today_only)
+
+    background_tasks.add_task(_run_sends)
+    return {
+        "status": "started",
+        "limit": limit,
+        "pull_forward": pull_forward,
+    }
+
+
+@app.post("/api/prospects/import")
+async def api_import_prospect_urls(urls: list[str] = Body(...)):
+    """Bulk-import LinkedIn profile URLs (used by prospects page)."""
+    from ph_scraper import ingest_linkedin_urls
+
+    added = await ingest_linkedin_urls(urls, source="manual")
+    return {"added": added}
 
 
 @app.get("/api/prospects/{id}")

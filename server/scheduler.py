@@ -149,9 +149,11 @@ async def run_connection_sender():
         rprint(f"[dim]📅 Daily budget hit ({sent_today}/{daily_budget}). Skipping.[/dim]")
         return
 
-    due = await db.get_prospects_due_today()
     remaining_budget = daily_budget - sent_today
-    to_send = due[:remaining_budget]
+    to_send = await db.get_queued_connection_batch(
+        remaining_budget,
+        due_today_only=True,
+    )
 
     if not to_send:
         today = date.today().strftime("%Y-%m-%d")
@@ -187,6 +189,93 @@ async def run_connection_sender():
         )
         rprint(f"[dim]  ⏳ Waiting {delay:.0f}s before next action[/dim]")
         await asyncio.sleep(delay)
+
+
+async def send_connections_now(
+    limit: int = 5,
+    *,
+    due_today_only: bool = False,
+) -> dict:
+    """
+    Manual batch send (dashboard / API). Ignores scheduler_running.
+    Respects daily budget and inter-action delays.
+
+    Set due_today_only=False to pull forward queued prospects whose scheduled_date
+    is still in the future (otherwise the cron job sends none until that date).
+    """
+    if not _agent:
+        rprint("[yellow]⚠️ LinkedIn agent not initialized[/yellow]")
+        return {"ok": False, "error": "agent_unavailable", "sent": 0}
+
+    daily_budget = int(await db.get_config("daily_budget") or config.DAILY_CONNECTION_BUDGET)
+    sent_today = await db.get_sent_count_today()
+    remaining_budget = daily_budget - sent_today
+    if remaining_budget <= 0:
+        rprint(f"[yellow]⚠️ Daily connection budget exhausted ({sent_today}/{daily_budget})[/yellow]")
+        return {
+            "ok": False,
+            "error": "daily_budget_exhausted",
+            "sent": 0,
+            "sent_today": sent_today,
+            "budget": daily_budget,
+        }
+
+    n = min(max(limit, 1), remaining_budget)
+    to_send = await db.get_queued_connection_batch(n, due_today_only=due_today_only)
+    if not to_send:
+        rprint("[dim]No queued prospects match this send mode.[/dim]")
+        return {"ok": True, "sent": 0, "attempted": 0, "message": "no prospects in queue"}
+
+    mode = "due today" if due_today_only else "pull-forward"
+    rprint(f"[blue]🔗 Manual send ({mode}): up to {len(to_send)} connection requests...[/blue]")
+
+    sent_ok = 0
+    for prospect in to_send:
+        url = prospect["linkedin_url"]
+        try:
+            await db.update_prospect_status(url, "sending")
+            success = await _agent.send_connection_request(url)
+            if success:
+                await db.update_prospect_status(
+                    url,
+                    "sent",
+                    extra={"sent_at": datetime.utcnow().isoformat() + "Z"},
+                )
+                await db.log_action("connection_sent", "ok", linkedin_url=url)
+                rprint(f"[green]✅ Connection sent:[/green] {url}")
+                sent_ok += 1
+            else:
+                await db.update_prospect_status(url, "queued")
+                await db.log_action(
+                    "connection_sent",
+                    "error",
+                    linkedin_url=url,
+                    detail="Send failed",
+                )
+        except Exception as e:
+            await db.update_prospect_status(url, "queued")
+            await db.log_action(
+                "connection_sent",
+                "error",
+                linkedin_url=url,
+                detail=str(e),
+            )
+            rprint(f"[red]❌ Connection error:[/red] {url} — {e}")
+
+        delay = random.uniform(
+            config.MIN_DELAY_BETWEEN_ACTIONS_SEC,
+            config.MAX_DELAY_BETWEEN_ACTIONS_SEC,
+        )
+        rprint(f"[dim]  ⏳ Waiting {delay:.0f}s before next action[/dim]")
+        await asyncio.sleep(delay)
+
+    rprint(f"[bold green]✅ Manual batch finished: {sent_ok}/{len(to_send)} sent[/bold green]")
+    return {
+        "ok": True,
+        "sent": sent_ok,
+        "attempted": len(to_send),
+        "due_today_only": due_today_only,
+    }
 
 
 async def run_acceptance_scanner():

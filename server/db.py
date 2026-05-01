@@ -275,6 +275,37 @@ async def get_prospects_due_today() -> list[dict]:
             return [dict(r) for r in rows]
 
 
+async def get_queued_connection_batch(
+    limit: int,
+    *,
+    due_today_only: bool = True,
+) -> list[dict]:
+    """
+    Queued prospects for outbound connection requests.
+
+    If due_today_only, only rows with scheduled_date <= today (UTC).
+    Otherwise, next in queue by priority and earliest scheduled_date (pull-forward sends).
+    """
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        if due_today_only:
+            sql = (
+                "SELECT * FROM prospects WHERE status='queued' AND scheduled_date<=? "
+                "ORDER BY priority DESC, id ASC LIMIT ?"
+            )
+            params = (today, limit)
+        else:
+            sql = (
+                "SELECT * FROM prospects WHERE status='queued' "
+                "ORDER BY priority DESC, scheduled_date ASC, id ASC LIMIT ?"
+            )
+            params = (limit,)
+        async with db.execute(sql, params) as cur:
+            rows = await cur.fetchall()
+            return [dict(r) for r in rows]
+
+
 async def get_accepted_not_messaged() -> list[dict]:
     """Return prospects who accepted the connection but haven't been DM'd yet."""
     async with aiosqlite.connect(DB_PATH) as db:
